@@ -13,6 +13,10 @@ class ATestUE4_01GameMode : public AGameModeBase
 
 public:
 	ATestUE4_01GameMode();
+
+private:
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	virtual void InitGameState() override;
 };
 
 

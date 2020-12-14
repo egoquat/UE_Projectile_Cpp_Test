@@ -6,6 +6,47 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Runtime/Slate/Public/Framework/Commands/InputChord.h"
+#include "Runtime/InputCore/Classes/InputCoreTypes.h"
+
+//////////////////////////////////////////////////////////////////////////
+// Input Setting
+
+UENUM()
+namespace EKeyTest
+{
+	enum Type
+	{
+		Q = 0,
+		W,
+		A
+	};
+}
+
+struct FKeyTest
+{
+	EKeyTest::Type Key;
+	bool IsPressed = false;
+	float TimePressStart = -1.0f;
+	FKeyTest(EKeyTest::Type key) { Key = key; }
+	void StartPress() 
+	{
+		if (true == IsPressed)
+			return;
+		IsPressed = true;
+		TimePressStart = FPlatformTime::Seconds();
+	}
+	float EndPress()
+	{
+		if (false == IsPressed) return -1.0f;
+		IsPressed = false;
+		float elapsed = FPlatformTime::Seconds() - TimePressStart;
+		GWarn->Logf(ELogVerbosity::Display, TEXT(" EndPressKey/%d/Elapsed:%f"), Key, elapsed);
+		return elapsed;
+	}
+};
+
+static TArray<FKeyTest> KeyTestEvents;
 
 ATestUE4_01Character::ATestUE4_01Character()
 {
@@ -41,12 +82,21 @@ ATestUE4_01Character::ATestUE4_01Character()
 	GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	GetCharacterMovement()->MaxFlySpeed = 600.f;
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+	if (KeyTestEvents.Num() <= 0)
+	{
+		KeyTestEvents.Add(FKeyTest(EKeyTest::Q));
+		KeyTestEvents.Add(FKeyTest(EKeyTest::W));
+		KeyTestEvents.Add(FKeyTest(EKeyTest::A));
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
 // Input
+
+void ATestUE4_01Character::Tick(float DeltaSeconds)
+{
+
+}
 
 void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -55,8 +105,15 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATestUE4_01Character::MoveRight);
 
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &ATestUE4_01Character::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &ATestUE4_01Character::TouchStopped);
+	// projectile key bindings.
+	PlayerInputComponent->BindKey(EKeys::Q, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyQPressedStart);
+	PlayerInputComponent->BindKey(EKeys::Q, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyQPressedEnd);
+
+	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyQPressedStart);
+	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyQPressedEnd);
+
+	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyQPressedStart);
+	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyQPressedEnd);
 }
 
 void ATestUE4_01Character::MoveRight(float Value)
@@ -65,14 +122,32 @@ void ATestUE4_01Character::MoveRight(float Value)
 	AddMovementInput(FVector(0.f,-1.f,0.f), Value);
 }
 
-void ATestUE4_01Character::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
+void ATestUE4_01Character::KeyQPressedStart()
 {
-	// jump on any touch
-	Jump();
+	KeyTestEvents[EKeyTest::Q].StartPress();
 }
 
-void ATestUE4_01Character::TouchStopped(const ETouchIndex::Type FingerIndex, const FVector Location)
+void ATestUE4_01Character::KeyQPressedEnd()
 {
-	StopJumping();
+	KeyTestEvents[EKeyTest::Q].EndPress();
 }
 
+void ATestUE4_01Character::KeyWPressedStart()
+{
+	KeyTestEvents[EKeyTest::W].StartPress();
+}
+
+void ATestUE4_01Character::KeyWPressedEnd()
+{
+	KeyTestEvents[EKeyTest::W].EndPress();
+}
+
+void ATestUE4_01Character::KeyAPressedStart()
+{
+	KeyTestEvents[EKeyTest::A].StartPress();
+}
+
+void ATestUE4_01Character::KeyAPressedEnd()
+{
+	KeyTestEvents[EKeyTest::A].EndPress();
+}

@@ -13,3 +13,15 @@ ATestUE4_01GameMode::ATestUE4_01GameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 }
+
+void ATestUE4_01GameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	GWarn->Logf(ELogVerbosity::Display, TEXT("ATestUE4_01GameMode::InitGame"));
+}
+
+void ATestUE4_01GameMode::InitGameState()
+{
+	Super::InitGameState();
+	GWarn->Logf(ELogVerbosity::Display, TEXT("ATestUE4_01GameMode::InitGameState"));
+}
