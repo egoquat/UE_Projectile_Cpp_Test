@@ -1,4 +1,5 @@
 #include "TestProjectile01.h"
+#include "TestUE4_01Character.h"
 #include "Components/SphereComponent.h"
 
 ATestProjectile01::ATestProjectile01()
@@ -23,17 +24,26 @@ void ATestProjectile01::BeginPlay()
 
 void ATestProjectile01::Tick(float DeltaTime)
 {
+    if (FPlatformTime::Seconds() >= TimeDestroyForce)
+    {
+        ATestUE4_01Character::AddDestoryRequest(this);
+        ArrowComponent->bHiddenInGame = true;
+        return;
+    }
+
     Super::Tick(DeltaTime);
     UpdateLocation(GetTransform().GetLocation());
 }
 
-void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection, float InSpeed, float InTimeDestroy)
+void ATestProjectile01::InitProjectile(ATestUE4_01Character* InOwner, FVector& InPosition, FVector& InDirection, float InSpeed, float InTimeDestroy)
 {
     Direction = InDirection;
     Rotation = Direction.ToOrientationQuat();
     Speed = InSpeed;
-    TimeDestroyForce = InTimeDestroy;
+    TimeSpawned = FPlatformTime::Seconds();
+    TimeDestroyForce = TimeSpawned + InTimeDestroy;
     PositionStart = InPosition;
+    OwnerTest = InOwner;
     SetActorLocationAndRotation(PositionStart, Rotation, false, 0, ETeleportType::None);
 }
 

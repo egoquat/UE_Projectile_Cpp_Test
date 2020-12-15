@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "TestProjectile01.h"
 #include "TestUE4_01Character.generated.h"
 
 UENUM()
@@ -78,6 +79,14 @@ class ATestUE4_01Character : public ACharacter
 	UPROPERTY()
 	class UCharacterMovementComponent* Movement;
 
+	static TSet<ATestProjectile01*> DestoryProjectiles;
+
+public:
+	ATestUE4_01Character();
+
+	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
+	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
 private:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -104,8 +113,5 @@ private:
 	void KeyAPressedEnd();
 
 public:
-	ATestUE4_01Character();
-
-	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	static void AddDestoryRequest(ATestProjectile01* TestProjectile);
 };

@@ -5,6 +5,8 @@
 #include "Components/ArrowComponent.h"
 #include "TestProjectile01.generated.h"
 
+#define DEFAULT_TIME_DESTROY 9.0f
+
 class USphereComponent;
 
 UCLASS()
@@ -34,12 +36,12 @@ private:
     FQuat Rotation;
 
     float TimeSpawned = 0.0f;
-    float TimeDestroyForce = -1.0f;
+    float TimeDestroyForce = 0.0f;
+    class ATestUE4_01Character* OwnerTest = nullptr;
 
 public:
-    void InitProjectile(FVector& InPosition, FVector& InDirection, float InSpeed, float InTimeDestroy = -1.0f);
+    void InitProjectile(ATestUE4_01Character* InOwner, FVector& InPosition, FVector& InDirection, float InSpeed, float InTimeDestroy = DEFAULT_TIME_DESTROY);
 
 private:
     void UpdateLocation(FVector LocationCurrent);
-    bool IsTimeDestoryForce() { return 0.0f < TimeDestroyForce; }
 };

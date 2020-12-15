@@ -13,6 +13,8 @@
 
 #include "TestProjectile01.h"
 
+TSet<ATestProjectile01*> ATestUE4_01Character::DestoryProjectiles;
+
 //////////////////////////////////////////////////////////////////////////
 // Settings
 UENUM()
@@ -151,6 +153,19 @@ void ATestUE4_01Character::Tick(float DeltaSeconds)
 		FTestKeyEvent& testkey = TestKeys[i];
 		testkey.TickPost();
 	}
+
+	TSet<ATestProjectile01*> Destroys;
+	for (ATestProjectile01* projectile : DestoryProjectiles)
+	{
+		GWorld->DestroyActor(projectile);
+		Destroys.Add(projectile);
+	}
+
+	for (ATestProjectile01* projectile : Destroys)
+	{
+		int removed = DestoryProjectiles.Remove(projectile);
+		GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01* projectile : Destroys/%d"), removed);
+	}
 }
 
 void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -184,7 +199,7 @@ void ATestUE4_01Character::SpawnAProjectile()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	ATestProjectile01* NewProjectile = GWorld->SpawnActor<ATestProjectile01>(ATestProjectile01::StaticClass(), SpawnParams);
-	NewProjectile->InitProjectile(Location, LookAt, 10);
+	NewProjectile->InitProjectile(this, Location, LookAt, 10);
 }
 
 void ATestUE4_01Character::StartSkill_1()
@@ -248,4 +263,9 @@ void ATestUE4_01Character::KeyAPressedStart()
 void ATestUE4_01Character::KeyAPressedEnd()
 {
 	TestKeys[ETestKey::A].EndPress();
+}
+
+void ATestUE4_01Character::AddDestoryRequest(ATestProjectile01* Projectile)
+{
+	DestoryProjectiles.Add(Projectile);
 }
