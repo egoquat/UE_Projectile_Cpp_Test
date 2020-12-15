@@ -1,6 +1,8 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/ArrowComponent.h"
 #include "TestProjectile01.generated.h"
 
 class USphereComponent;
@@ -11,18 +13,33 @@ class ATestProjectile01 : public AActor
     GENERATED_BODY()
 
 public:
-    // 이 액터 프로퍼티의 기본값을 설정합니다.
     ATestProjectile01();
 
 protected:
-    // 게임 시작 또는 스폰시 호출됩니다.
     virtual void BeginPlay() override;
 
 public:
-    // 매 프레임 호출됩니다.
     virtual void Tick(float DeltaSeconds) override;
 
-    // 구체 콜리전 컴포넌트입니다.
-    UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
+    UPROPERTY()
+    UArrowComponent* ArrowComponent;
+
+    UPROPERTY()
     USphereComponent* CollisionComponent;
+
+private:
+    float Speed = 0.0f;
+    FVector PositionStart;
+    FVector Direction;
+    FQuat Rotation;
+
+    float TimeSpawned = 0.0f;
+    float TimeDestroyForce = -1.0f;
+
+public:
+    void InitProjectile(FVector& InPosition, FVector& InDirection, float InSpeed, float InTimeDestroy = -1.0f);
+
+private:
+    void UpdateLocation(FVector LocationCurrent);
+    bool IsTimeDestoryForce() { return 0.0f < TimeDestroyForce; }
 };

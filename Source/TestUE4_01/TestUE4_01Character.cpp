@@ -8,45 +8,50 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Runtime/Slate/Public/Framework/Commands/InputChord.h"
 #include "Runtime/InputCore/Classes/InputCoreTypes.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+
+#include "TestProjectile01.h"
 
 //////////////////////////////////////////////////////////////////////////
-// Input Setting
-
+// Settings
 UENUM()
-namespace EKeyTest
+namespace ESkill
 {
 	enum Type
 	{
-		Q = 0,
-		W,
-		A
+		_1 = 0,
+		_2,
+		_3,
+		_4,
+		_5
 	};
-}
+};
 
-struct FKeyTest
+struct FKeyAction
 {
-	EKeyTest::Type Key;
-	bool IsPressed = false;
-	float TimePressStart = -1.0f;
-	FKeyTest(EKeyTest::Type key) { Key = key; }
-	void StartPress() 
+	ESkill::Type TypeSkill;
+	TFunction<void()> Action = nullptr;
+	TFunction<bool(float)> Cond = nullptr;
+
+	FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond)
 	{
-		if (true == IsPressed)
-			return;
-		IsPressed = true;
-		TimePressStart = FPlatformTime::Seconds();
+		TypeSkill = typeSkill;
+		Action = action;
+		Cond = cond;
 	}
-	float EndPress()
+
+	void TickAction(float deltaSec)
 	{
-		if (false == IsPressed) return -1.0f;
-		IsPressed = false;
-		float elapsed = FPlatformTime::Seconds() - TimePressStart;
-		GWarn->Logf(ELogVerbosity::Display, TEXT(" EndPressKey/%d/Elapsed:%f"), Key, elapsed);
-		return elapsed;
+		if (false == Cond(deltaSec))
+			return;
+
+		Action();
 	}
 };
 
-static TArray<FKeyTest> KeyTestEvents;
+static TArray<FTestKeyEvent> TestKeys;
+static TArray<FKeyAction> TestKeyActions;
 
 ATestUE4_01Character::ATestUE4_01Character()
 {
@@ -73,20 +78,60 @@ ATestUE4_01Character::ATestUE4_01Character()
 	SideViewCameraComponent->bUsePawnControlRotation = false; // We don't want the controller rotating the camera
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Face in the direction we are moving..
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->GravityScale = 2.f;
-	GetCharacterMovement()->AirControl = 0.80f;
-	GetCharacterMovement()->JumpZVelocity = 1000.f;
-	GetCharacterMovement()->GroundFriction = 3.f;
-	GetCharacterMovement()->MaxWalkSpeed = 600.f;
-	GetCharacterMovement()->MaxFlySpeed = 600.f;
+	Movement = GetCharacterMovement();
+	Movement->bOrientRotationToMovement = true; // Face in the direction we are moving..
+	Movement->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
+	Movement->GravityScale = 2.f;
+	Movement->AirControl = 0.80f;
+	Movement->JumpZVelocity = 1000.f;
+	Movement->GroundFriction = 3.f;
+	Movement->MaxWalkSpeed = 600.f;
+	Movement->MaxFlySpeed = 600.f;
 
-	if (KeyTestEvents.Num() <= 0)
+	// Init action skill
+	if (TestKeys.Num() <= 0)
 	{
-		KeyTestEvents.Add(FKeyTest(EKeyTest::Q));
-		KeyTestEvents.Add(FKeyTest(EKeyTest::W));
-		KeyTestEvents.Add(FKeyTest(EKeyTest::A));
+		TestKeys.Add(FTestKeyEvent(ETestKey::Q));
+		TestKeys.Add(FTestKeyEvent(ETestKey::W));
+		TestKeys.Add(FTestKeyEvent(ETestKey::A));
+
+		TFunction<bool(float)> condition = nullptr;
+		condition = [&](float deltaSec)
+		{
+			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			return (true == keyQ.IsReleased && 3.0f > keyQ.TimePressRelease);
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::_1, [&]() {StartSkill_1(); }, condition));
+
+		condition = [&](float deltaSec)
+		{
+			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			return (true == keyQ.IsReleased && 3.0f <= keyQ.TimePressRelease);
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::_2, [&]() {StartSkill_2(); }, condition));
+
+		condition = [&](float deltaSec)
+		{
+			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			FTestKeyEvent& keyW = TestKeys[ETestKey::W];
+			return (true == keyQ.IsPressed && 1.0f >= keyQ.GetElapsePressed() && true == keyW.IsPressed);
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::_3, [&]() {StartSkill_3(); }, condition));
+
+		condition = [&](float deltaSec)
+		{
+			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			FTestKeyEvent& keyW = TestKeys[ETestKey::W];
+			return (false == keyQ.IsPressed && true == keyW.IsReleased);
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::_4, [&]() {StartSkill_4(); }, condition));
+
+		condition = [&](float deltaSec)
+		{
+			FTestKeyEvent& keyA = TestKeys[ETestKey::A];
+			return (true == keyA.IsReleased);
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::_5, [&]() {StartSkill_5(); }, condition));
 	}
 }
 
@@ -95,7 +140,17 @@ ATestUE4_01Character::ATestUE4_01Character()
 
 void ATestUE4_01Character::Tick(float DeltaSeconds)
 {
+	for (int i = 0; i < TestKeyActions.Num(); ++i)
+	{
+		FKeyAction& keyAction = TestKeyActions[i];
+		keyAction.TickAction(DeltaSeconds);
+	}
 
+	for (int i = 0; i < TestKeys.Num(); ++i)
+	{
+		FTestKeyEvent& testkey = TestKeys[i];
+		testkey.TickPost();
+	}
 }
 
 void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -109,11 +164,54 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::Q, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyQPressedStart);
 	PlayerInputComponent->BindKey(EKeys::Q, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyQPressedEnd);
 
-	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyQPressedStart);
-	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyQPressedEnd);
+	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyWPressedStart);
+	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyWPressedEnd);
 
-	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyQPressedStart);
-	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyQPressedEnd);
+	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyAPressedStart);
+	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
+}
+
+void ATestUE4_01Character::SpawnAProjectile()
+{
+	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GWorld, 0);
+	UPawnMovementComponent* MoveComp = Character->GetMovementComponent();
+	ensure(nullptr != MoveComp);
+
+	FTransform TMNew = FTransform::Identity;
+	FVector LookAt = Character->GetActorForwardVector();
+	FVector Up = Character->GetActorUpVector();
+	FVector Location = MoveComp->GetActorFeetLocation() + (Up * 50) + (LookAt * 20);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ATestProjectile01* NewProjectile = GWorld->SpawnActor<ATestProjectile01>(ATestProjectile01::StaticClass(), SpawnParams);
+	NewProjectile->InitProjectile(Location, LookAt, 10);
+}
+
+void ATestUE4_01Character::StartSkill_1()
+{
+	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_1"));
+
+	SpawnAProjectile();
+}
+
+void ATestUE4_01Character::StartSkill_2()
+{
+	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_2"));
+}
+
+void ATestUE4_01Character::StartSkill_3()
+{
+	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_3"));
+}
+
+void ATestUE4_01Character::StartSkill_4()
+{
+	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_4"));
+}
+
+void ATestUE4_01Character::StartSkill_5()
+{
+	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_5"));
 }
 
 void ATestUE4_01Character::MoveRight(float Value)
@@ -124,30 +222,30 @@ void ATestUE4_01Character::MoveRight(float Value)
 
 void ATestUE4_01Character::KeyQPressedStart()
 {
-	KeyTestEvents[EKeyTest::Q].StartPress();
+	TestKeys[ETestKey::Q].StartPress();
 }
 
 void ATestUE4_01Character::KeyQPressedEnd()
 {
-	KeyTestEvents[EKeyTest::Q].EndPress();
+	TestKeys[ETestKey::Q].EndPress();
 }
 
 void ATestUE4_01Character::KeyWPressedStart()
 {
-	KeyTestEvents[EKeyTest::W].StartPress();
+	TestKeys[ETestKey::W].StartPress();
 }
 
 void ATestUE4_01Character::KeyWPressedEnd()
 {
-	KeyTestEvents[EKeyTest::W].EndPress();
+	TestKeys[ETestKey::W].EndPress();
 }
 
 void ATestUE4_01Character::KeyAPressedStart()
 {
-	KeyTestEvents[EKeyTest::A].StartPress();
+	TestKeys[ETestKey::A].StartPress();
 }
 
 void ATestUE4_01Character::KeyAPressedEnd()
 {
-	KeyTestEvents[EKeyTest::A].EndPress();
+	TestKeys[ETestKey::A].EndPress();
 }

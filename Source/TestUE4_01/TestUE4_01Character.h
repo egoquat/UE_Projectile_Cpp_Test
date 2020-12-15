@@ -6,19 +6,93 @@
 #include "GameFramework/Character.h"
 #include "TestUE4_01Character.generated.h"
 
+UENUM()
+namespace ETestKey
+{
+	enum Type
+	{
+		Q = 0,
+		W,
+		A
+	};
+}
+
+struct FTestKeyEvent
+{
+	ETestKey::Type Key;
+	bool IsPressed = false;
+	bool IsReleased = false;
+	bool IsEvented = false;
+	float TimePressStart = -1.0f;
+	float TimePressRelease = 0.0f;
+	FTestKeyEvent(ETestKey::Type key) { Key = key; }
+
+private:
+	void Reset()
+	{
+		IsEvented = IsReleased = false;
+		TimePressRelease = 0.0f;
+	}
+
+public:
+	float GetElapsePressed() { return FPlatformTime::Seconds() - TimePressStart; }
+
+public:
+	void StartPress()
+	{
+		Reset();
+		if (true == IsPressed)
+			return;
+		IsPressed = true;
+		TimePressStart = FPlatformTime::Seconds();
+	}
+
+	float EndPress()
+	{
+		if (false == IsPressed) return -1.0f;
+		IsPressed = false;
+		TimePressRelease = FPlatformTime::Seconds() - TimePressStart;
+		GWarn->Logf(ELogVerbosity::Display, TEXT(" EndPressKey/%d/Elapsed:%f"), Key, TimePressRelease);
+		IsReleased = true;
+		return TimePressRelease;
+	}
+
+	void TickPost()
+	{
+		Reset();
+	}
+};
+
 UCLASS(config=Game)
 class ATestUE4_01Character : public ACharacter
 {
 	GENERATED_BODY()
 
 	/** Side view camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	class UCameraComponent* SideViewCameraComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	class USpringArmComponent* CameraBoom;
 
-protected:
+	UPROPERTY()
+	class UCharacterMovementComponent* Movement;
+
+private:
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+
+private:
+	void SpawnAProjectile();
+
+private:
+	void StartSkill_1();
+	void StartSkill_2();
+	void StartSkill_3();
+	void StartSkill_4();
+	void StartSkill_5();
+
+private:
 	void MoveRight(float Val);
 	void KeyQPressedStart();
 	void KeyQPressedEnd();
@@ -28,9 +102,6 @@ protected:
 
 	void KeyAPressedStart();
 	void KeyAPressedEnd();
-
-	virtual void Tick(float DeltaSeconds) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 public:
 	ATestUE4_01Character();
