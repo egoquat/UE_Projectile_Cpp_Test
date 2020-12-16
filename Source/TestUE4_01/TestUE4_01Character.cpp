@@ -186,37 +186,47 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
 }
 
-void ATestUE4_01Character::SpawnAProjectile()
+void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle)
 {
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GWorld, 0);
 	UPawnMovementComponent* MoveComp = Character->GetMovementComponent();
 	ensure(nullptr != MoveComp);
 
-	FTransform TMNew = FTransform::Identity;
-	FVector LookAt = Character->GetActorForwardVector();
-	FVector Up = Character->GetActorUpVector();
-	FVector Location = MoveComp->GetActorFeetLocation() + (Up * 50) + (LookAt * 20);
+	const FTransform& TM = Character->GetActorTransform();
+	FQuat Rotation = TM.GetRotation();
+	FVector Dir = Rotation.GetForwardVector();
+	FVector Up = Rotation.GetUpVector();
+	FVector Location = MoveComp->GetActorFeetLocation() + (Up * 50) + (Dir * 20);
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	ATestProjectile01* NewProjectile = GWorld->SpawnActor<ATestProjectile01>(ATestProjectile01::StaticClass(), SpawnParams);
-	NewProjectile->InitProjectile(this, Location, LookAt, 10);
+	if (FMath::Abs(InAngle) > KINDA_SMALL_NUMBER)
+	{
+		FRotator Rotator = Rotation.Rotator();
+		Rotator.Pitch += InAngle;
+		Dir = Rotator.Vector();
+	}
+	NewProjectile->InitProjectile(Location, Dir, InScale);
 }
 
 void ATestUE4_01Character::StartSkill_1()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_1"));
-
-	SpawnAProjectile();
+	SpawnAProjectile(1.0f);
 }
 
 void ATestUE4_01Character::StartSkill_2()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_2"));
+	SpawnAProjectile(3.0f);
 }
 
 void ATestUE4_01Character::StartSkill_3()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_3"));
+	SpawnAProjectile(1.0f, 0.0f);
+	SpawnAProjectile(1.0f, 45.0f);
+	SpawnAProjectile(1.0f, -45.0f);
 }
 
 void ATestUE4_01Character::StartSkill_4()

@@ -92,7 +92,7 @@ private:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 private:
-	void SpawnAProjectile();
+	void SpawnAProjectile(float InScale = 1.0f, float InAngle = 0.0f);
 
 private:
 	void StartSkill_1();
