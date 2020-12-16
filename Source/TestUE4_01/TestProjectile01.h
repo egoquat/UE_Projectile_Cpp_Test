@@ -3,10 +3,8 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/ArrowComponent.h"
+#include "TestProjectileSetting.h"
 #include "TestProjectile01.generated.h"
-
-#define DEFAULT_DESTROY 9.0f
-#define DEFAULT_SPEED 1.0f
 
 class UBoxComponent;
 
@@ -41,11 +39,14 @@ private:
     bool IsHitReflect = false;
 
 public:
-    void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, float InTimeDestroy = DEFAULT_DESTROY, bool bIsHitReflect = false);
+    void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY);
 
 private:
-    void UpdateLocation(FVector LocationCurrent);
+    void UpdateLocation(FVector LocationCurrent, float DeltaTime);
     
     UFUNCTION()
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+    UFUNCTION()
+    void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

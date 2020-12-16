@@ -14,6 +14,7 @@
 #include "TestProjectile01.h"
 
 TSet<ATestProjectile01*> ATestUE4_01Character::DestoryProjectiles;
+TArray<AActor*> ATestUE4_01Character::FirstActors;
 
 //////////////////////////////////////////////////////////////////////////
 // Settings
@@ -137,6 +138,12 @@ ATestUE4_01Character::ATestUE4_01Character()
 	}
 }
 
+void ATestUE4_01Character::BeginPlay()
+{
+	Super::BeginPlay();
+	FirstActors.Add(this);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -164,7 +171,6 @@ void ATestUE4_01Character::Tick(float DeltaSeconds)
 	for (ATestProjectile01* projectile : Destroys)
 	{
 		int removed = DestoryProjectiles.Remove(projectile);
-		GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01* projectile : Destroys/%d"), removed);
 	}
 }
 
@@ -186,7 +192,7 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
 }
 
-void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle)
+void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle, bool IsHitReflect, float InTimeDestroy)
 {
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GWorld, 0);
 	UPawnMovementComponent* MoveComp = Character->GetMovementComponent();
@@ -206,7 +212,7 @@ void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle)
 		Rotator.Pitch += InAngle;
 		Dir = Rotator.Vector();
 	}
-	NewProjectile->InitProjectile(Location, Dir, InScale);
+	NewProjectile->InitProjectile(Location, Dir, InScale, true, InTimeDestroy);
 }
 
 void ATestUE4_01Character::StartSkill_1()
