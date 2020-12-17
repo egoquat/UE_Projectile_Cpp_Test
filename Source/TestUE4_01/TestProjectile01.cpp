@@ -50,6 +50,11 @@ void ATestProjectile01::Tick(float DeltaTime)
 
     Super::Tick(DeltaTime);
     UpdateLocation(GetTransform().GetLocation(), DeltaTime);
+	if (nullptr != OnTimeTrigger)
+	{
+		float elapsed = FPlatformTime::Seconds() - TimeSpawned;
+		OnTimeTrigger(this, elapsed);
+	}
 }
 
 void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy, FColor InColor)

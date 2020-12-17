@@ -40,6 +40,9 @@ private:
     bool IsHitReflect = false;
 
 public:
+	TFunction<void(ATestProjectile01*, float)> OnTimeTrigger = nullptr;
+
+public:
 	static TSet<ATestProjectile01*> Projectiles;
 
 public:

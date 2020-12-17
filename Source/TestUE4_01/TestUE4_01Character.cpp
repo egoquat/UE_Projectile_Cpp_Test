@@ -165,6 +165,13 @@ void ATestUE4_01Character::BeginPlay()
 
 	Super::BeginPlay();
 	FirstActors.Add(this);
+
+	APlayerController* PlayerController = GEngine->GetFirstLocalPlayerController(GWorld);
+	if (nullptr != PlayerController)
+	{
+		APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager;
+		CameraManager->SetFOV(90);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -215,17 +222,25 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
 }
 
-void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+ATestProjectile01* ATestUE4_01Character::SpawnProjectileByActor(float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GWorld, 0);
 	UPawnMovementComponent* MoveComp = Character->GetMovementComponent();
 	ensure(nullptr != MoveComp);
 
-	const FTransform& TM = Character->GetActorTransform();
+	FTransform TM = Character->GetTransform();
 	FQuat Rotation = TM.GetRotation();
+	FVector PosRelative = MoveComp->GetActorFeetLocation() - TM.GetLocation() + (Rotation.GetUpVector() * 50) + (Rotation.GetForwardVector() * 20);
+	ATestProjectile01* Spawned = SpawnProjectile(TM, PosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
+	return Spawned;
+}
+
+ATestProjectile01* ATestUE4_01Character::SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+{
+	FQuat Rotation = InTM.GetRotation();
 	FVector Dir = Rotation.GetForwardVector();
 	FVector Up = Rotation.GetUpVector();
-	FVector Location = MoveComp->GetActorFeetLocation() + (Up * 50) + (Dir * 20);
+	FVector Location = InTM.GetLocation() + InPosRelative;
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	ATestProjectile01* NewProjectile = GWorld->SpawnActor<ATestProjectile01>(ATestProjectile01::StaticClass(), SpawnParams);
@@ -236,32 +251,52 @@ void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle, bool b
 		Dir = Rotator.Vector();
 	}
 	NewProjectile->InitProjectile(Location, Dir, InScale, bIsHitReflect, InTimeDestroy, InColor);
+	return NewProjectile;
 }
 
 void ATestUE4_01Character::StartSkill_1()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_1"));
-	SpawnAProjectile(1.0f);
+	SpawnProjectileByActor(1.0f);
 }
 
 void ATestUE4_01Character::StartSkill_2()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_2"));
-	SpawnAProjectile(3.0f);
+	SpawnProjectileByActor(3.0f, 0.0f, false, 5.0f);
 }
 
 void ATestUE4_01Character::StartSkill_3()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_3"));
-	SpawnAProjectile(1.0f, 0.0f);
-	SpawnAProjectile(1.0f, 45.0f);
-	SpawnAProjectile(1.0f, -45.0f);
+	TFunction<void(ATestProjectile01*, float)> OnTimeTrigger = [&](ATestProjectile01* projectile, float elapsed)
+	{
+		if (elapsed < 2.0f) return;
+
+		FTransform tm = projectile->GetTransform();
+		FVector relative = FVector::ZeroVector;
+		SpawnProjectile(tm, relative, 1.0f, 0.0f);
+		SpawnProjectile(tm, relative, 1.0f, 45.0f);
+		SpawnProjectile(tm, relative, 1.0f, -45.0f);
+
+		ATestUE4_01Character::AddDestoryRequest(projectile);
+		projectile->ArrowComponent->bHiddenInGame = true;
+	};
+	ATestProjectile01* Spawned = nullptr;
+	Spawned = SpawnProjectileByActor(1.0f, 0.0f, false, 4.0f);
+	Spawned->OnTimeTrigger = OnTimeTrigger;
+
+	Spawned = SpawnProjectileByActor(1.0f, 45.0f, false, 4.0f);
+	Spawned->OnTimeTrigger = OnTimeTrigger;
+
+	Spawned = SpawnProjectileByActor(1.0f, -45.0f, false, 4.0f);
+	Spawned->OnTimeTrigger = OnTimeTrigger;
 }
 
 void ATestUE4_01Character::StartSkill_4()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_4"));
-	SpawnAProjectile(1.0f, 0.0f, true, DEFAULT_DESTROY, FColor(0, 0, 255));
+	SpawnProjectileByActor(1.0f, 0.0f, true, 5.0f, FColor(0, 0, 255));
 }
 
 void ATestUE4_01Character::StartSkill_5()
@@ -269,7 +304,7 @@ void ATestUE4_01Character::StartSkill_5()
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_5"));
 	for (int i = 0; i < 360; i += 30)
 	{
-		SpawnAProjectile(0.5f, i, true, DEFAULT_DESTROY, FColor(0, 0, 255));
+		SpawnProjectileByActor(0.5f, i, true, DEFAULT_DESTROY, FColor(0, 0, 255));
 	}
 }
 
