@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "TestProjectile01.h"
+#include "TestUE4_01UI.h"
 
 TSet<ATestProjectile01*> ATestUE4_01Character::DestoryProjectiles;
 TArray<AActor*> ATestUE4_01Character::FirstActors;
@@ -36,12 +37,20 @@ struct FKeyAction
 	ESkill::Type TypeSkill;
 	TFunction<void()> Action = nullptr;
 	TFunction<bool(float)> Cond = nullptr;
+	TFunction<float()> OnProgress = nullptr;
 
-	FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond)
+	float GetProgress()
+	{
+		if (nullptr == OnProgress) return 1.0f;
+		return OnProgress();
+	}
+
+	FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress = nullptr)
 	{
 		TypeSkill = typeSkill;
 		Action = action;
 		Cond = cond;
+		OnProgress = onprogress;
 	}
 
 	void TickAction(float deltaSec)
@@ -99,10 +108,11 @@ ATestUE4_01Character::ATestUE4_01Character()
 		TestKeys.Add(FTestKeyEvent(ETestKey::A));
 
 		TFunction<bool(float)> condition = nullptr;
+		TFunction<float()> onprogress = nullptr;
 		condition = [&](float deltaSec)
 		{
 			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
-			return (true == keyQ.IsReleased && 3.0f > keyQ.TimePressRelease);
+			return (true == keyQ.IsReleased && 0.1f > keyQ.TimePressRelease);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::_1, [&]() {StartSkill_1(); }, condition));
 
@@ -111,7 +121,18 @@ ATestUE4_01Character::ATestUE4_01Character()
 			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
 			return (true == keyQ.IsReleased && 3.0f <= keyQ.TimePressRelease);
 		};
-		TestKeyActions.Add(FKeyAction(ESkill::_2, [&]() {StartSkill_2(); }, condition));
+		onprogress = [&]()
+		{
+			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			float progress = 0.0f;
+			if (true == keyQ.IsPressed && keyQ.GetElapsePressed() >= 0.1f)
+			{
+				progress = (keyQ.GetElapsePressed() - 0.1f) / (3.0f - 0.1f);
+				progress = FMath::Clamp(progress, 0.0f, 1.0f);
+			}
+			return progress;
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::_2, [&]() {StartSkill_2(); }, condition, onprogress));
 
 		condition = [&](float deltaSec)
 		{
@@ -140,6 +161,8 @@ ATestUE4_01Character::ATestUE4_01Character()
 
 void ATestUE4_01Character::BeginPlay()
 {
+	FTestUE4_01UI::InitTestUI();
+
 	Super::BeginPlay();
 	FirstActors.Add(this);
 }
@@ -284,4 +307,9 @@ void ATestUE4_01Character::KeyAPressedEnd()
 void ATestUE4_01Character::AddDestoryRequest(ATestProjectile01* Projectile)
 {
 	DestoryProjectiles.Add(Projectile);
+}
+
+int ATestUE4_01Character::GetProgressSkill_2()
+{
+	return TestKeyActions[ESkill::_2].GetProgress() * 100.0f;
 }

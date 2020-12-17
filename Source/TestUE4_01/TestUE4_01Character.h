@@ -119,4 +119,5 @@ private:
 
 public:
 	static void AddDestoryRequest(ATestProjectile01* TestProjectile);
+	static int GetProgressSkill_2();
 };

@@ -9,8 +9,6 @@ public class TestUE4_01 : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
-
-
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "InputCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "EditorStyle" });
 	}
 }
