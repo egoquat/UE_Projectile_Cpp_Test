@@ -44,6 +44,7 @@ public:
 
 public:
 	static TSet<ATestProjectile01*> Projectiles;
+	static void DestroyRequestAll();
 
 public:
     void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);

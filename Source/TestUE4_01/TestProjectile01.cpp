@@ -43,7 +43,7 @@ void ATestProjectile01::Tick(float DeltaTime)
 {
     if (FPlatformTime::Seconds() >= TimeDestroyForce)
     {
-        ATestUE4_01Character::AddDestoryRequest(this);
+        ATestUE4_01Character::AddDestroyRequest(this);
         ArrowComponent->bHiddenInGame = true;
         return;
     }
@@ -54,6 +54,14 @@ void ATestProjectile01::Tick(float DeltaTime)
 	{
 		float elapsed = FPlatformTime::Seconds() - TimeSpawned;
 		OnTimeTrigger(this, elapsed);
+	}
+}
+
+void ATestProjectile01::DestroyRequestAll()
+{
+	for (ATestProjectile01* Iter : Projectiles)
+	{
+		ATestUE4_01Character::AddDestroyRequest(Iter);
 	}
 }
 
@@ -90,13 +98,13 @@ void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
     {
 		if (true == IsHitReflect)
 		{
-			GWarn->Logf(ELogVerbosity::Error, TEXT(" IsHitCheckForce/Reflect:%s/"), *Hit.GetActor()->GetName());
+			//GWarn->Logf(ELogVerbosity::Error, TEXT(" IsHitCheckForce/Reflect:%s/"), *Hit.GetActor()->GetName());
 			Direction = Direction - ((FVector::DotProduct(Direction, Hit.Normal) * 2) * Hit.Normal);
 			//Direction = FMath::GetReflectionVector(Direction, Hit.Normal);
 		}
 		else
 		{
-			ATestUE4_01Character::AddDestoryRequest(this);
+			ATestUE4_01Character::AddDestroyRequest(this);
 			ArrowComponent->bHiddenInGame = true;
 			return;
 		}
@@ -109,12 +117,12 @@ void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 
 void ATestProjectile01::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnHit/%s"), *OtherActor->GetName());
+    //GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnHit/%s"), *OtherActor->GetName());
     Direction = Direction - ((FVector::DotProduct(Direction, Hit.Normal) * 2) * Hit.Normal);
 }
 
 void ATestProjectile01::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnBeginOverlap/Other:%s"), *Other->GetName());
+    //GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnBeginOverlap/Other:%s"), *Other->GetName());
     Direction = Direction - ((FVector::DotProduct(Direction, SweepResult.Normal) * 2) * SweepResult.Normal);
 }

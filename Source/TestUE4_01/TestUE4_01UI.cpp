@@ -18,11 +18,14 @@ class STestUE4_01UI : public SCompoundWidget
 
 	FSlateFontInfo FontStyle = FEditorStyle::GetFontStyle(TEXT("MenuItem.Font"));
 	FSlateFontInfo FontStyleText = FEditorStyle::GetFontStyle(TEXT("MenuItem.Font"));
+	FTextBlockStyle BlockStyle;
 
 	void Construct(const FArguments& Args)
 	{
 		FontStyle.Size = 50.0f;
 		FontStyleText.Size = 20.0f;
+		BlockStyle.SetFont(FontStyle);
+		BlockStyle.SetHighlightColor(FLinearColor::White);
 		ChildSlot
 		[
 			SNew(SVerticalBox)
@@ -42,6 +45,11 @@ class STestUE4_01UI : public SCompoundWidget
 			.Padding(FMargin(10.0f, 10.0f, 10.0f, 10.0f))
 			[
 				GenerateProjectileCount()
+			]
+			+ SVerticalBox::Slot()
+			.Padding(FMargin(10.0f, 10.0f, 10.0f, 10.0f))
+			[
+				GenerateDestroyBtn()
 			]
 		];
 	}
@@ -116,6 +124,28 @@ class STestUE4_01UI : public SCompoundWidget
 		return WidgetTextBlock;
 	}
 
+	TSharedRef<SWidget> GenerateDestroyBtn() const
+	{
+		TSharedRef<SWidget> WidgetTextBlock = SNew(SBox)
+			.WidthOverride(400)
+			.HeightOverride(50)
+			.HAlign(HAlign_Right)
+			[
+				SNew(SBox)
+				.Padding(FMargin(4.0f, 0.0f, 0.0f, 0.0f))
+				.WidthOverride(400)
+				.HeightOverride(50)
+				.HAlign(HAlign_Center)
+				[
+					SNew(SButton)
+					.TextStyle(&BlockStyle)
+					.Text(FText::FromString(TEXT("Reset(R)")))
+					.OnClicked(this, &STestUE4_01UI::OnClickDestroyProjectileAll)
+				]
+			];
+		return WidgetTextBlock;
+	}
+
 	int GetProgressSkill_2() const
 	{
 		return ATestUE4_01Character::GetProgressSkill_2();
@@ -127,6 +157,12 @@ class STestUE4_01UI : public SCompoundWidget
 		FString CountString = FString::Printf(TEXT("Count:%d"), ATestProjectile01::Projectiles.Num());
 		TextCount = FText::FromString(CountString);
 		return TextCount;
+	}
+
+	FReply OnClickDestroyProjectileAll() const
+	{
+		ATestProjectile01::DestroyRequestAll();
+		return FReply::Handled();
 	}
 };
 

@@ -14,7 +14,7 @@
 #include "TestProjectile01.h"
 #include "TestUE4_01UI.h"
 
-TSet<ATestProjectile01*> ATestUE4_01Character::DestoryProjectiles;
+TSet<ATestProjectile01*> ATestUE4_01Character::DestroyProjectiles;
 TArray<AActor*> ATestUE4_01Character::FirstActors;
 
 //////////////////////////////////////////////////////////////////////////
@@ -192,7 +192,7 @@ void ATestUE4_01Character::Tick(float DeltaSeconds)
 	}
 
 	TSet<ATestProjectile01*> Destroys;
-	for (ATestProjectile01* projectile : DestoryProjectiles)
+	for (ATestProjectile01* projectile : DestroyProjectiles)
 	{
 		GWorld->DestroyActor(projectile);
 		Destroys.Add(projectile);
@@ -200,7 +200,7 @@ void ATestUE4_01Character::Tick(float DeltaSeconds)
 
 	for (ATestProjectile01* projectile : Destroys)
 	{
-		int removed = DestoryProjectiles.Remove(projectile);
+		int removed = DestroyProjectiles.Remove(projectile);
 	}
 }
 
@@ -220,6 +220,8 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyAPressedStart);
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
+
+	PlayerInputComponent->BindKey(EKeys::R, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyRPressedEnd);
 }
 
 ATestProjectile01* ATestUE4_01Character::SpawnProjectileByActor(float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
@@ -279,7 +281,7 @@ void ATestUE4_01Character::StartSkill_3()
 		SpawnProjectile(tm, relative, 1.0f, 45.0f);
 		SpawnProjectile(tm, relative, 1.0f, -45.0f);
 
-		ATestUE4_01Character::AddDestoryRequest(projectile);
+		ATestUE4_01Character::AddDestroyRequest(projectile);
 		projectile->ArrowComponent->bHiddenInGame = true;
 	};
 	ATestProjectile01* Spawned = nullptr;
@@ -344,9 +346,14 @@ void ATestUE4_01Character::KeyAPressedEnd()
 	TestKeys[ETestKey::A].EndPress();
 }
 
-void ATestUE4_01Character::AddDestoryRequest(ATestProjectile01* Projectile)
+void ATestUE4_01Character::KeyRPressedEnd()
 {
-	DestoryProjectiles.Add(Projectile);
+	ATestProjectile01::DestroyRequestAll();
+}
+
+void ATestUE4_01Character::AddDestroyRequest(ATestProjectile01* Projectile)
+{
+	DestroyProjectiles.Add(Projectile);
 }
 
 int ATestUE4_01Character::GetProgressSkill_2()

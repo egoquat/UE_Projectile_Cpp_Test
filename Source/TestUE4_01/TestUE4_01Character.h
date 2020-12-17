@@ -80,7 +80,7 @@ class ATestUE4_01Character : public ACharacter
 	UPROPERTY()
 	class UCharacterMovementComponent* Movement;
 
-	static TSet<ATestProjectile01*> DestoryProjectiles;
+	static TSet<ATestProjectile01*> DestroyProjectiles;
 
 public:
 	static TArray<AActor*> FirstActors;
@@ -118,7 +118,9 @@ private:
 	void KeyAPressedStart();
 	void KeyAPressedEnd();
 
+	void KeyRPressedEnd();
+
 public:
-	static void AddDestoryRequest(ATestProjectile01* TestProjectile);
+	static void AddDestroyRequest(ATestProjectile01* TestProjectile);
 	static int GetProgressSkill_2();
 };
