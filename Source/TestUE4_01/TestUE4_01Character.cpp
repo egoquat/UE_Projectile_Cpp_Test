@@ -112,7 +112,7 @@ ATestUE4_01Character::ATestUE4_01Character()
 		condition = [&](float deltaSec)
 		{
 			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
-			return (true == keyQ.IsReleased && 0.1f > keyQ.TimePressRelease);
+			return (true == keyQ.IsReleased && 3.0f > keyQ.TimePressRelease);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::_1, [&]() {StartSkill_1(); }, condition));
 
@@ -125,9 +125,9 @@ ATestUE4_01Character::ATestUE4_01Character()
 		{
 			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
 			float progress = 0.0f;
-			if (true == keyQ.IsPressed && keyQ.GetElapsePressed() >= 0.1f)
+			if (true == keyQ.IsPressed && keyQ.GetElapsePressed() > 0.0f)
 			{
-				progress = (keyQ.GetElapsePressed() - 0.1f) / (3.0f - 0.1f);
+				progress = (keyQ.GetElapsePressed()) / (3.0f);
 				progress = FMath::Clamp(progress, 0.0f, 1.0f);
 			}
 			return progress;
@@ -215,7 +215,7 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
 }
 
-void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle, bool IsHitReflect, float InTimeDestroy)
+void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GWorld, 0);
 	UPawnMovementComponent* MoveComp = Character->GetMovementComponent();
@@ -235,7 +235,7 @@ void ATestUE4_01Character::SpawnAProjectile(float InScale, float InAngle, bool I
 		Rotator.Pitch += InAngle;
 		Dir = Rotator.Vector();
 	}
-	NewProjectile->InitProjectile(Location, Dir, InScale, true, InTimeDestroy);
+	NewProjectile->InitProjectile(Location, Dir, InScale, bIsHitReflect, InTimeDestroy, InColor);
 }
 
 void ATestUE4_01Character::StartSkill_1()
@@ -261,11 +261,16 @@ void ATestUE4_01Character::StartSkill_3()
 void ATestUE4_01Character::StartSkill_4()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_4"));
+	SpawnAProjectile(1.0f, 0.0f, true, DEFAULT_DESTROY, FColor(0, 0, 255));
 }
 
 void ATestUE4_01Character::StartSkill_5()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_5"));
+	for (int i = 0; i < 360; i += 30)
+	{
+		SpawnAProjectile(0.5f, i, true, DEFAULT_DESTROY, FColor(0, 0, 255));
+	}
 }
 
 void ATestUE4_01Character::MoveRight(float Value)

@@ -18,6 +18,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
     virtual void Tick(float DeltaSeconds) override;
@@ -39,7 +40,10 @@ private:
     bool IsHitReflect = false;
 
 public:
-    void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY);
+	static TSet<ATestProjectile01*> Projectiles;
+
+public:
+    void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 
 private:
     void UpdateLocation(FVector LocationCurrent, float DeltaTime);

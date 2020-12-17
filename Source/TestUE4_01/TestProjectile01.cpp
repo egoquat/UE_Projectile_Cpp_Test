@@ -3,6 +3,8 @@
 #include "Components/BoxComponent.h"
 #include "Engine/CollisionProfile.h"
 
+TSet<ATestProjectile01*> ATestProjectile01::Projectiles;
+
 ATestProjectile01::ATestProjectile01()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -28,6 +30,13 @@ ATestProjectile01::ATestProjectile01()
 void ATestProjectile01::BeginPlay()
 {
     Super::BeginPlay();
+	Projectiles.Add(this);
+}
+
+void ATestProjectile01::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	Projectiles.Remove(this);
 }
 
 void ATestProjectile01::Tick(float DeltaTime)
@@ -43,7 +52,7 @@ void ATestProjectile01::Tick(float DeltaTime)
     UpdateLocation(GetTransform().GetLocation(), DeltaTime);
 }
 
-void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy)
+void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
     Direction = InDirection;
     Rotation = Direction.ToOrientationQuat();
@@ -58,27 +67,34 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
     //CollisionComponent->OnComponentHit.AddDynamic(this, &ATestProjectile01::OnHit);
     //CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ATestProjectile01::OnBeginOverlap);
 
-    ArrowComponent->ArrowSize = InScale;
+	ArrowComponent->SetArrowColor(InColor);
+
     SetActorScale3D(FVector(InScale));
     SetActorLocationAndRotation(PositionStart, Rotation, false, 0, ETeleportType::None);
 }
 
 void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 {
-    if (true == IsHitReflect)
+    FCollisionQueryParams TraceParams;
+    TraceParams.AddIgnoredActor(this);
+    TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
+    TraceParams.bTraceComplex = true;
+    FHitResult Hit;
+    bool Hitted = GWorld->LineTraceSingleByObjectType(Hit, LocationCurrent, LocationCurrent + (Direction * DEFAULT_ARROW_LEN), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
+    if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile01::StaticClass())
     {
-        FCollisionQueryParams TraceParams;
-        TraceParams.AddIgnoredActor(this);
-        TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
-        TraceParams.bTraceComplex = true;
-        FHitResult Hit;
-        bool Hitted = GWorld->LineTraceSingleByObjectType(Hit, LocationCurrent, LocationCurrent + (Direction * DEFAULT_ARROW_LEN), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
-        if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile01::StaticClass())
-        {
-            GWarn->Logf(ELogVerbosity::Error, TEXT(" IsHitCheckForce:%s"), *Hit.GetActor()->GetName());
-            Direction = Direction - ((FVector::DotProduct(Direction, Hit.Normal) * 2) * Hit.Normal);
-            //Direction = FMath::GetReflectionVector(Direction, Hit.Normal);
-        }
+		if (true == IsHitReflect)
+		{
+			GWarn->Logf(ELogVerbosity::Error, TEXT(" IsHitCheckForce/Reflect:%s/"), *Hit.GetActor()->GetName());
+			Direction = Direction - ((FVector::DotProduct(Direction, Hit.Normal) * 2) * Hit.Normal);
+			//Direction = FMath::GetReflectionVector(Direction, Hit.Normal);
+		}
+		else
+		{
+			ATestUE4_01Character::AddDestoryRequest(this);
+			ArrowComponent->bHiddenInGame = true;
+			return;
+		}
     }
 
     FVector NewLocation = LocationCurrent + (Direction * (Speed * DeltaTime));

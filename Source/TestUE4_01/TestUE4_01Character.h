@@ -97,7 +97,7 @@ private:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 private:
-	void SpawnAProjectile(float InScale = 1.0f, float InAngle = 0.0f, bool IsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY);
+	void SpawnAProjectile(float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 
 private:
 	void StartSkill_1();
