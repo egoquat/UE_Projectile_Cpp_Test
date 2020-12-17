@@ -273,7 +273,7 @@ void ATestUE4_01Character::StartSkill_3()
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_3"));
 	TFunction<void(ATestProjectile01*, float)> OnTimeTrigger = [&](ATestProjectile01* projectile, float elapsed)
 	{
-		if (elapsed < 2.0f) return;
+		if (elapsed < DEFAULT_TIME_TRIGGER) return;
 
 		FTransform tm = projectile->GetTransform();
 		FVector relative = FVector::ZeroVector;
@@ -304,9 +304,25 @@ void ATestUE4_01Character::StartSkill_4()
 void ATestUE4_01Character::StartSkill_5()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_5"));
+	TFunction<void(ATestProjectile01*, float)> OnTimeTrigger = [&](ATestProjectile01* projectile, float elapsed)
+	{
+		if (elapsed < DEFAULT_TIME_TRIGGER - 1.0f) return;
+
+		FTransform tm = projectile->GetTransform();
+		FVector relative = FVector::ZeroVector;
+		for (int i = 0; i < 360; i += 45)
+		{
+			SpawnProjectile(tm, relative, 0.5f, i, true, DEFAULT_DESTROY, FColor::Cyan);
+		}
+
+		ATestUE4_01Character::AddDestroyRequest(projectile);
+		projectile->ArrowComponent->bHiddenInGame = true;
+	};
+
 	for (int i = 0; i < 360; i += 30)
 	{
-		SpawnProjectileByActor(0.5f, i, true, DEFAULT_DESTROY, FColor(0, 0, 255));
+		ATestProjectile01* Spawned = SpawnProjectileByActor(0.5f, i, true, 4.0f, FColor(0, 0, 255));
+		Spawned->OnTimeTrigger = OnTimeTrigger;
 	}
 }
 
