@@ -17,60 +17,74 @@
 TSet<ATestProjectile01*> ATestUE4_01Character::DestroyProjectiles;
 TArray<AActor*> ATestUE4_01Character::FirstActors;
 
-//////////////////////////////////////////////////////////////////////////
-// Settings
-UENUM()
-namespace ESkill
-{
-	enum Type
-	{
-		_1 = 0,
-		_2,
-		_3,
-		_4,
-		_5
-	};
-};
-
-struct FKeyAction
-{
-	ESkill::Type TypeSkill;
-	TFunction<void()> Action = nullptr;
-	TFunction<bool(float)> Cond = nullptr;
-	TFunction<float()> OnProgress = nullptr;
-	float TimeLastCall = 0.0f;
-
-	float GetProgress()
-	{
-		if (nullptr == OnProgress) return 1.0f;
-		return OnProgress();
-	}
-
-	FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress = nullptr)
-	{
-		TypeSkill = typeSkill;
-		Action = action;
-		Cond = cond;
-		OnProgress = onprogress;
-	}
-
-	void TickAction(float deltaSec)
-	{
-		if (false == Cond(deltaSec))
-			return;
-
-		float timeCurrent = GWorld->GetRealTimeSeconds();
-		if (timeCurrent - TimeLastCall < DEFAULT_ACTION_DELTA)
-			return;
-
-		Action();
-		TimeLastCall = timeCurrent;
-	}
-};
-
 static TArray<FTestKeyEvent> TestKeys;
 static TArray<FKeyAction> TestKeyActions;
 static TQueue<TFunction<void()>> QueueOnSpawns;
+
+//////////////////////////////////////////////////////////////////////////
+// Settings
+
+void FTestKeyEvent::Reset()
+{
+	IsEvented = IsReleased = false;
+	TimePressRelease = 0.0f;
+}
+
+float FTestKeyEvent::GetElapsePressed() { return FPlatformTime::Seconds() - TimePressStart; }
+
+void FTestKeyEvent::StartPress()
+{
+	Reset();
+	if (true == IsPressed)
+		return;
+	IsPressed = true;
+	TimePressStart = FPlatformTime::Seconds();
+	GWarn->Logf(ELogVerbosity::Display, TEXT(" Start PressKey/%d/Time:%f"), Key, TimePressStart);
+	GFrameCounter;
+}
+
+float FTestKeyEvent::EndPress()
+{
+	if (false == IsPressed) return -1.0f;
+	IsPressed = false;
+	float TimeCurrent = FPlatformTime::Seconds();
+	TimePressRelease = TimeCurrent - TimePressStart;
+	GWarn->Logf(ELogVerbosity::Display, TEXT(" End PressKey/%d/Time:%f/Elapsed:%f"), Key, TimeCurrent, TimePressRelease);
+	IsReleased = true;
+	return TimePressRelease;
+}
+
+void FTestKeyEvent::TickPost()
+{
+	Reset();
+}
+
+float FKeyAction::GetProgress()
+{
+	if (nullptr == OnProgress) return 1.0f;
+	return OnProgress();
+}
+
+FKeyAction::FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress)
+{
+	TypeSkill = typeSkill;
+	Action = action;
+	Cond = cond;
+	OnProgress = onprogress;
+}
+
+void FKeyAction::TickAction(float deltaSec)
+{
+	if (false == Cond(deltaSec))
+		return;
+
+	float timeCurrent = FPlatformTime::Seconds();
+	if (timeCurrent - TimeLastCall < DEFAULT_ACTION_DELTA)
+		return;
+
+	Action();
+	TimeLastCall = timeCurrent;
+}
 
 ATestUE4_01Character::ATestUE4_01Character()
 {
@@ -106,7 +120,10 @@ ATestUE4_01Character::ATestUE4_01Character()
 	Movement->GroundFriction = 3.f;
 	Movement->MaxWalkSpeed = 600.f;
 	Movement->MaxFlySpeed = 600.f;
+}
 
+void ATestUE4_01Character::BeginPlay()
+{
 	// Init action skill
 	if (TestKeys.Num() <= 0)
 	{
@@ -136,6 +153,7 @@ ATestUE4_01Character::ATestUE4_01Character()
 			{
 				progress = (keyQ.GetElapsePressed()) / (3.0f);
 				progress = FMath::Clamp(progress, 0.0f, 1.0f);
+				GWarn->Logf(ELogVerbosity::Display, TEXT(" progress Press:%f/ Elapsed:%f"), progress, keyQ.GetElapsePressed());
 			}
 			return progress;
 		};
@@ -164,10 +182,7 @@ ATestUE4_01Character::ATestUE4_01Character()
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::_5, [&]() {StartSkill_5(); }, condition));
 	}
-}
 
-void ATestUE4_01Character::BeginPlay()
-{
 	FTestUE4_01UI::InitTestUI();
 
 	Super::BeginPlay();

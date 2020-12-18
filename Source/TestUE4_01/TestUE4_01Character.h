@@ -19,6 +19,19 @@ namespace ETestKey
 	};
 }
 
+UENUM()
+namespace ESkill
+{
+	enum Type
+	{
+		_1 = 0,
+		_2,
+		_3,
+		_4,
+		_5
+	};
+}
+
 struct FTestKeyEvent
 {
 	ETestKey::Type Key;
@@ -30,42 +43,27 @@ struct FTestKeyEvent
 	FTestKeyEvent(ETestKey::Type key) { Key = key; }
 
 private:
-	void Reset()
-	{
-		IsEvented = IsReleased = false;
-		TimePressRelease = 0.0f;
-	}
+	void Reset();
 
 public:
-	float GetElapsePressed() { return GWorld->GetRealTimeSeconds() - TimePressStart; }
+	float GetElapsePressed();
 
 public:
-	void StartPress()
-	{
-		Reset();
-		if (true == IsPressed)
-			return;
-		IsPressed = true;
-		TimePressStart = GWorld->GetRealTimeSeconds();
-		GWarn->Logf(ELogVerbosity::Display, TEXT(" Start PressKey/%d/Time:%f"), Key, TimePressStart);
-		GFrameCounter;
-	}
+	void StartPress();
+	float EndPress();
+	void TickPost();
+};
 
-	float EndPress()
-	{
-		if (false == IsPressed) return -1.0f;
-		IsPressed = false;
-		float TimeCurrent = GWorld->GetRealTimeSeconds();
-		TimePressRelease = TimeCurrent - TimePressStart;
-		GWarn->Logf(ELogVerbosity::Display, TEXT(" End PressKey/%d/Time:%f/Elapsed:%f"), Key, TimeCurrent, TimePressRelease);
-		IsReleased = true;
-		return TimePressRelease;
-	}
-
-	void TickPost()
-	{
-		Reset();
-	}
+struct FKeyAction
+{
+	ESkill::Type TypeSkill;
+	TFunction<void()> Action = nullptr;
+	TFunction<bool(float)> Cond = nullptr;
+	TFunction<float()> OnProgress = nullptr;
+	float TimeLastCall = 0.0f;
+	float GetProgress();
+	FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress = nullptr);
+	void TickAction(float deltaSec);
 };
 
 UCLASS(config=Game)
