@@ -153,7 +153,7 @@ void ATestUE4_01Character::BeginPlay()
 			{
 				progress = (keyQ.GetElapsePressed()) / (3.0f);
 				progress = FMath::Clamp(progress, 0.0f, 1.0f);
-				GWarn->Logf(ELogVerbosity::Display, TEXT(" progress Press:%f/ Elapsed:%f"), progress, keyQ.GetElapsePressed());
+				//GWarn->Logf(ELogVerbosity::Display, TEXT(" progress Press:%f/ Elapsed:%f"), progress, keyQ.GetElapsePressed());
 			}
 			return progress;
 		};
