@@ -37,7 +37,7 @@ private:
 	}
 
 public:
-	float GetElapsePressed() { return FPlatformTime::Seconds() - TimePressStart; }
+	float GetElapsePressed() { return GWorld->GetRealTimeSeconds() - TimePressStart; }
 
 public:
 	void StartPress()
@@ -46,15 +46,18 @@ public:
 		if (true == IsPressed)
 			return;
 		IsPressed = true;
-		TimePressStart = FPlatformTime::Seconds();
+		TimePressStart = GWorld->GetRealTimeSeconds();
+		GWarn->Logf(ELogVerbosity::Display, TEXT(" Start PressKey/%d/Time:%f"), Key, TimePressStart);
+		GFrameCounter;
 	}
 
 	float EndPress()
 	{
 		if (false == IsPressed) return -1.0f;
 		IsPressed = false;
-		TimePressRelease = FPlatformTime::Seconds() - TimePressStart;
-		GWarn->Logf(ELogVerbosity::Display, TEXT(" EndPressKey/%d/Elapsed:%f"), Key, TimePressRelease);
+		float TimeCurrent = GWorld->GetRealTimeSeconds();
+		TimePressRelease = TimeCurrent - TimePressStart;
+		GWarn->Logf(ELogVerbosity::Display, TEXT(" End PressKey/%d/Time:%f/Elapsed:%f"), Key, TimeCurrent, TimePressRelease);
 		IsReleased = true;
 		return TimePressRelease;
 	}
@@ -98,6 +101,7 @@ private:
 
 private:
 	ATestProjectile01* SpawnProjectileByActor(float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+	void SpawnProjectileQueued(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 	ATestProjectile01* SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 
 private:

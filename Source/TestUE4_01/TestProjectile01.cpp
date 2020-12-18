@@ -41,7 +41,7 @@ void ATestProjectile01::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ATestProjectile01::Tick(float DeltaTime)
 {
-    if (FPlatformTime::Seconds() >= TimeDestroyForce)
+    if (GWorld->GetRealTimeSeconds() >= TimeDestroyForce)
     {
         ATestUE4_01Character::AddDestroyRequest(this);
         ArrowComponent->bHiddenInGame = true;
@@ -52,7 +52,7 @@ void ATestProjectile01::Tick(float DeltaTime)
     UpdateLocation(GetTransform().GetLocation(), DeltaTime);
 	if (nullptr != OnTimeTrigger)
 	{
-		float elapsed = FPlatformTime::Seconds() - TimeSpawned;
+		float elapsed = GWorld->GetRealTimeSeconds() - TimeSpawned;
 		OnTimeTrigger(this, elapsed);
 	}
 }
@@ -70,7 +70,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
     Direction = InDirection;
     Rotation = Direction.ToOrientationQuat();
     Speed = DEFAULT_SPEED;
-    TimeSpawned = FPlatformTime::Seconds();
+    TimeSpawned = GWorld->GetRealTimeSeconds();
     TimeDestroyForce = TimeSpawned + InTimeDestroy;
     PositionStart = InPosition + (InDirection * DEFAULT_RELATIVE);
     

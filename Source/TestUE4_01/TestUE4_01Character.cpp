@@ -38,6 +38,7 @@ struct FKeyAction
 	TFunction<void()> Action = nullptr;
 	TFunction<bool(float)> Cond = nullptr;
 	TFunction<float()> OnProgress = nullptr;
+	float TimeLastCall = 0.0f;
 
 	float GetProgress()
 	{
@@ -58,12 +59,18 @@ struct FKeyAction
 		if (false == Cond(deltaSec))
 			return;
 
+		float timeCurrent = GWorld->GetRealTimeSeconds();
+		if (timeCurrent - TimeLastCall < DEFAULT_ACTION_DELTA)
+			return;
+
 		Action();
+		TimeLastCall = timeCurrent;
 	}
 };
 
 static TArray<FTestKeyEvent> TestKeys;
 static TArray<FKeyAction> TestKeyActions;
+static TQueue<TFunction<void()>> QueueOnSpawns;
 
 ATestUE4_01Character::ATestUE4_01Character()
 {
@@ -202,6 +209,14 @@ void ATestUE4_01Character::Tick(float DeltaSeconds)
 	{
 		int removed = DestroyProjectiles.Remove(projectile);
 	}
+
+	int CountIter = 0;
+	while(CountIter++ < DEFAULT_DEQUEUE_PERFRAME && false == QueueOnSpawns.IsEmpty())
+	{
+		TFunction<void()> OnSpawn = nullptr;
+		QueueOnSpawns.Dequeue(OnSpawn);
+		OnSpawn();
+	}
 }
 
 void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -235,6 +250,15 @@ ATestProjectile01* ATestUE4_01Character::SpawnProjectileByActor(float InScale, f
 	FVector PosRelative = MoveComp->GetActorFeetLocation() - TM.GetLocation() + (Rotation.GetUpVector() * 50) + (Rotation.GetForwardVector() * 20);
 	ATestProjectile01* Spawned = SpawnProjectile(TM, PosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
 	return Spawned;
+}
+
+void ATestUE4_01Character::SpawnProjectileQueued(const FTransform& InTM, const FVector& InPosRelative, float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+{
+	TFunction<void()> OnSpawn = [=]()
+	{
+		SpawnProjectile(InTM, InPosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
+	};
+	QueueOnSpawns.Enqueue(OnSpawn);
 }
 
 ATestProjectile01* ATestUE4_01Character::SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
@@ -277,9 +301,9 @@ void ATestUE4_01Character::StartSkill_3()
 
 		FTransform tm = projectile->GetTransform();
 		FVector relative = FVector::ZeroVector;
-		SpawnProjectile(tm, relative, 1.0f, 0.0f);
-		SpawnProjectile(tm, relative, 1.0f, 45.0f);
-		SpawnProjectile(tm, relative, 1.0f, -45.0f);
+		SpawnProjectileQueued(tm, relative, 1.0f, 0.0f);
+		SpawnProjectileQueued(tm, relative, 1.0f, 45.0f);
+		SpawnProjectileQueued(tm, relative, 1.0f, -45.0f);
 
 		ATestUE4_01Character::AddDestroyRequest(projectile);
 		projectile->ArrowComponent->bHiddenInGame = true;
@@ -312,7 +336,7 @@ void ATestUE4_01Character::StartSkill_5()
 		FVector relative = FVector::ZeroVector;
 		for (int i = 0; i < 360; i += 45)
 		{
-			SpawnProjectile(tm, relative, 0.5f, i, true, DEFAULT_DESTROY, FColor::Cyan);
+			SpawnProjectileQueued(tm, relative, 0.5f, i, true, DEFAULT_DESTROY, FColor::Cyan);
 		}
 
 		ATestUE4_01Character::AddDestroyRequest(projectile);
