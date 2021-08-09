@@ -94,7 +94,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 
 		TArray<FOverlapResult> OutOverlaps;
 
-		bool overlapped = GWorld->OverlapMultiByObjectType(OutOverlaps, PositionStart + (Direction * boxExtent.Y), FQuat::Identity, FCollisionObjectQueryParams(ECC_WorldStatic), collisionShape, TraceParams);
+		bool overlapped = GWorld->OverlapMultiByObjectType(OutOverlaps, PositionStart + (Direction * boxExtent.Y * 0.5f), FQuat::Identity, FCollisionObjectQueryParams(ECC_WorldStatic), collisionShape, TraceParams);
 		if (true == overlapped)
 		{
 			for (int i = 0; i < OutOverlaps.Num(); ++i)
@@ -106,6 +106,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 					{
 						Direction = -Direction;
 						Rotation = Direction.ToOrientationQuat();
+						//Rotation = Rotation * -1.0f;
 						break;
 					}
 					else
