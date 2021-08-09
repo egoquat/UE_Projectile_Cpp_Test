@@ -15,13 +15,7 @@ ATestProjectile01::ATestProjectile01()
     CollisionComponent->bHiddenInGame = false;
     CollisionComponent->InitBoxExtent(FVector(45, 7, 7));
     CollisionComponent->AddRelativeLocation(FVector(DEFAULT_ARROW_LEN, 0, 0));
-    
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	//CollisionComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	//CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
-	//CollisionComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-	//CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ATestProjectile01::OnUpdatedOverlapBegin);
-	//CollisionComponent->SetSimulatePhysics(true);
 
     ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
     ArrowComponent->bHiddenInGame = false;
@@ -104,9 +98,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 				{
 					if (true == IsHitReflect)
 					{
-						Direction = -Direction;
-						Rotation = Direction.ToOrientationQuat();
-						//Rotation = Rotation * -1.0f;
+						Rotation = Rotation * -1.0f;
 						break;
 					}
 					else
@@ -162,7 +154,7 @@ void ATestProjectile01::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UP
 void ATestProjectile01::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     //GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnBeginOverlap/Other:%s"), *Other->GetName());
-    Direction = Direction - ((FVector::DotProduct(Direction, SweepResult.Normal) * 2) * SweepResult.Normal);
+    //Direction = Direction - ((FVector::DotProduct(Direction, SweepResult.Normal) * 2) * SweepResult.Normal);
 }
 
 void ATestProjectile01::OnUpdatedOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
