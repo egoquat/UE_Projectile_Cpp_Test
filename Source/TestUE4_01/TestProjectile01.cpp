@@ -88,7 +88,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 		TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
 		TraceParams.bTraceComplex = true;
         
-        FVector boxExtent = CollisionComponent->GetScaledBoxExtent();
+		FVector boxExtent = Rotation.RotateVector(CollisionComponent->GetScaledBoxExtent()).GetAbs();
 		FCollisionShape collisionShape; 
 		collisionShape.SetBox(boxExtent);
 
@@ -105,6 +105,8 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 					if (true == IsHitReflect)
 					{
 						Direction = -Direction;
+						Rotation = Direction.ToOrientationQuat();
+						break;
 					}
 					else
 					{
@@ -146,9 +148,9 @@ void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 		}
 	}
 
-    FVector NewLocation = LocationCurrent + (Direction * (Speed * DeltaTime));
-    Rotation = Direction.ToOrientationQuat();
-    SetActorLocationAndRotation(NewLocation, Rotation, false, 0, ETeleportType::None);
+    //FVector NewLocation = LocationCurrent + (Direction * (Speed * DeltaTime));
+    //Rotation = Direction.ToOrientationQuat();
+    //SetActorLocationAndRotation(NewLocation, Rotation, false, 0, ETeleportType::None);
 }
 
 void ATestProjectile01::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
