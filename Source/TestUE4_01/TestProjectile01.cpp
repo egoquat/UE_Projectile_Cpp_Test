@@ -1,4 +1,5 @@
 #include "TestProjectile01.h"
+#include "CoreMinimal.h"
 #include "TestUE4_01Character.h"
 #include "Components/BoxComponent.h"
 #include "Engine/CollisionProfile.h"
@@ -14,9 +15,13 @@ ATestProjectile01::ATestProjectile01()
     CollisionComponent->bHiddenInGame = false;
     CollisionComponent->InitBoxExtent(FVector(45, 7, 7));
     CollisionComponent->AddRelativeLocation(FVector(DEFAULT_ARROW_LEN, 0, 0));
-    //CollisionComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-    //CollisionComponent->SetCollisionProfileName(TEXT("OverlapAll"));
-    //CollisionComponent->SetCollisionProfileName(TEXT("BlockAll"));
+    
+	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//CollisionComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	//CollisionComponent->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Overlap);
+	//CollisionComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+	//CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ATestProjectile01::OnUpdatedOverlapBegin);
+	//CollisionComponent->SetSimulatePhysics(true);
 
     ArrowComponent = CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComponent"));
     ArrowComponent->bHiddenInGame = false;
@@ -75,10 +80,41 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
     PositionStart = InPosition + (InDirection * DEFAULT_RELATIVE);
     
     IsHitReflect = bIsHitReflect;
-    //CollisionComponent->SetCollisionEnabled(true == bIsHitReflect ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
     CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    //CollisionComponent->OnComponentHit.AddDynamic(this, &ATestProjectile01::OnHit);
-    //CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &ATestProjectile01::OnBeginOverlap);
+    if (true == bIsHitReflect)
+    {
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(this);
+		TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
+		TraceParams.bTraceComplex = true;
+        
+        FVector boxExtent = CollisionComponent->GetScaledBoxExtent();
+		FCollisionShape collisionShape; 
+		collisionShape.SetBox(boxExtent);
+
+		TArray<FOverlapResult> OutOverlaps;
+
+		bool overlapped = GWorld->OverlapMultiByObjectType(OutOverlaps, PositionStart + (Direction * boxExtent.Y), FQuat::Identity, FCollisionObjectQueryParams(ECC_WorldStatic), collisionShape, TraceParams);
+		if (true == overlapped)
+		{
+			for (int i = 0; i < OutOverlaps.Num(); ++i)
+			{
+				FOverlapResult& overlap = OutOverlaps[i];
+				if (nullptr != overlap.Actor && overlap.Actor->GetClass() != ATestProjectile01::StaticClass())
+				{
+					if (true == IsHitReflect)
+					{
+						Direction = -Direction;
+					}
+					else
+					{
+						ATestUE4_01Character::AddDestroyRequest(this);
+						continue;
+					}
+				}
+			}	
+		}
+    }
 
 	ArrowComponent->SetArrowColor(InColor);
 
@@ -88,14 +124,14 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 
 void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 {
-    FCollisionQueryParams TraceParams;
-    TraceParams.AddIgnoredActor(this);
-    TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
-    TraceParams.bTraceComplex = true;
-    FHitResult Hit;
-    bool Hitted = GWorld->LineTraceSingleByObjectType(Hit, LocationCurrent, LocationCurrent + (Direction * DEFAULT_ARROW_LEN), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
-    if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile01::StaticClass())
-    {
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this);
+	TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
+	TraceParams.bTraceComplex = true;
+	FHitResult Hit;
+	bool Hitted = GWorld->LineTraceSingleByObjectType(Hit, LocationCurrent, LocationCurrent + (Direction * DEFAULT_ARROW_LEN), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
+	if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile01::StaticClass())
+	{
 		if (true == IsHitReflect)
 		{
 			//GWarn->Logf(ELogVerbosity::Error, TEXT(" IsHitCheckForce/Reflect:%s/"), *Hit.GetActor()->GetName());
@@ -108,21 +144,25 @@ void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 			ArrowComponent->bHiddenInGame = true;
 			return;
 		}
-    }
+	}
 
     FVector NewLocation = LocationCurrent + (Direction * (Speed * DeltaTime));
     Rotation = Direction.ToOrientationQuat();
     SetActorLocationAndRotation(NewLocation, Rotation, false, 0, ETeleportType::None);
 }
 
-void ATestProjectile01::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ATestProjectile01::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
-    //GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnHit/%s"), *OtherActor->GetName());
-    Direction = Direction - ((FVector::DotProduct(Direction, Hit.Normal) * 2) * Hit.Normal);
+    GWarn->Logf(ELogVerbosity::Error, TEXT(" ATestProjectile01::NotifyHit/%s/"), *Other->GetName());
 }
 
 void ATestProjectile01::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     //GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnBeginOverlap/Other:%s"), *Other->GetName());
     Direction = Direction - ((FVector::DotProduct(Direction, SweepResult.Normal) * 2) * SweepResult.Normal);
+}
+
+void ATestProjectile01::OnUpdatedOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
 }
