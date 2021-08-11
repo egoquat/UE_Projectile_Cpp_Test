@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "TestProjectile01.h"
+#include "TestProjectile.h"
 #include "TestProjectileSetting.h"
 #include "TestUE4_01Character.generated.h"
 
@@ -81,7 +81,7 @@ class ATestUE4_01Character : public ACharacter
 	UPROPERTY()
 	class UCharacterMovementComponent* Movement;
 
-	static TSet<ATestProjectile01*> DestroyProjectiles;
+	static TSet<ATestProjectile*> DestroyProjectiles;
 
 public:
 	static TArray<AActor*> FirstActors;
@@ -98,9 +98,9 @@ private:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 private:
-	ATestProjectile01* SpawnProjectileByActor(float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+	ATestProjectile* SpawnProjectileByActor(float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 	void SpawnProjectileQueued(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
-	ATestProjectile01* SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+	ATestProjectile* SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 
 private:
 	void StartSkill_1();
@@ -123,6 +123,6 @@ private:
 	void KeyRPressedEnd();
 
 public:
-	static void AddDestroyRequest(ATestProjectile01* TestProjectile);
+	static void AddDestroyRequest(ATestProjectile* TestProjectile);
 	static int GetProgressSkill_2();
 };

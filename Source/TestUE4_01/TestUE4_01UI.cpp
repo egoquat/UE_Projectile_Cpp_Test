@@ -1,6 +1,6 @@
 #include "TestUE4_01UI.h"
 #include "TestUE4_01Character.h"
-#include "TestProjectile01.h"
+#include "TestProjectile.h"
 #include "Editor/EditorStyle/Public/EditorStyleSet.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Input/SSpinBox.h"
@@ -154,14 +154,14 @@ class STestUE4_01UI : public SCompoundWidget
 	FText GetProjectileCount() const
 	{
 		FText TextCount;
-		FString CountString = FString::Printf(TEXT("Count:%d"), ATestProjectile01::Projectiles.Num());
+		FString CountString = FString::Printf(TEXT("Count:%d"), ATestProjectile::Projectiles.Num());
 		TextCount = FText::FromString(CountString);
 		return TextCount;
 	}
 
 	FReply OnClickDestroyProjectileAll() const
 	{
-		ATestProjectile01::DestroyRequestAll();
+		ATestProjectile::DestroyRequestAll();
 		return FReply::Handled();
 	}
 };

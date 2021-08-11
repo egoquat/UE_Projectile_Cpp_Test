@@ -1,12 +1,12 @@
-#include "TestProjectile01.h"
+#include "TestProjectile.h"
 #include "CoreMinimal.h"
 #include "TestUE4_01Character.h"
 #include "Components/BoxComponent.h"
 #include "Engine/CollisionProfile.h"
 
-TSet<ATestProjectile01*> ATestProjectile01::Projectiles;
+TSet<ATestProjectile*> ATestProjectile::Projectiles;
 
-ATestProjectile01::ATestProjectile01()
+ATestProjectile::ATestProjectile()
 {
     PrimaryActorTick.bCanEverTick = true;
 
@@ -26,19 +26,19 @@ ATestProjectile01::ATestProjectile01()
     RootComponent = CollisionComponent;
 }
 
-void ATestProjectile01::BeginPlay()
+void ATestProjectile::BeginPlay()
 {
     Super::BeginPlay();
 	Projectiles.Add(this);
 }
 
-void ATestProjectile01::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void ATestProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	Projectiles.Remove(this);
 }
 
-void ATestProjectile01::Tick(float DeltaTime)
+void ATestProjectile::Tick(float DeltaTime)
 {
     if (FPlatformTime::Seconds() >= TimeDestroyForce)
     {
@@ -56,15 +56,26 @@ void ATestProjectile01::Tick(float DeltaTime)
 	}
 }
 
-void ATestProjectile01::DestroyRequestAll()
+void ATestProjectile::DestroyRequestAll()
 {
-	for (ATestProjectile01* Iter : Projectiles)
+	for (ATestProjectile* Iter : Projectiles)
 	{
 		ATestUE4_01Character::AddDestroyRequest(Iter);
 	}
 }
 
-void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+bool ATestProjectile::IntersectLine(FHitResult& OutHit, const FVector& InStart, const FVector& InEnd)
+{
+	FCollisionQueryParams TraceParams;
+	TraceParams.AddIgnoredActor(this);
+	TraceParams.AddIgnoredActors(ATestUE4_01Character::FirstActors);
+	TraceParams.bTraceComplex = true;
+
+	bool intersected = GWorld->LineTraceSingleByObjectType(OutHit, InStart, InEnd, FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
+	return intersected;
+}
+
+void ATestProjectile::InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
     Direction = InDirection;
     Rotation = Direction.ToOrientationQuat();
@@ -94,7 +105,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
 			for (int i = 0; i < OutOverlaps.Num(); ++i)
 			{
 				FOverlapResult& overlap = OutOverlaps[i];
-				if (nullptr != overlap.Actor && overlap.Actor->GetClass() != ATestProjectile01::StaticClass())
+				if (nullptr != overlap.Actor && overlap.Actor->GetClass() != ATestProjectile::StaticClass())
 				{
 					if (true == IsHitReflect)
 					{
@@ -117,7 +128,7 @@ void ATestProjectile01::InitProjectile(FVector& InPosition, FVector& InDirection
     SetActorLocationAndRotation(PositionStart, Rotation, false, 0, ETeleportType::None);
 }
 
-void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
+void ATestProjectile::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 {
 	FCollisionQueryParams TraceParams;
 	TraceParams.AddIgnoredActor(this);
@@ -125,7 +136,7 @@ void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 	TraceParams.bTraceComplex = true;
 	FHitResult Hit;
 	bool Hitted = GWorld->LineTraceSingleByObjectType(Hit, LocationCurrent, LocationCurrent + (Direction * DEFAULT_ARROW_LEN), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
-	if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile01::StaticClass())
+	if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile::StaticClass())
 	{
 		if (true == IsHitReflect)
 		{
@@ -146,18 +157,7 @@ void ATestProjectile01::UpdateLocation(FVector LocationCurrent, float DeltaTime)
 	SetActorLocationAndRotation(NewLocation, Rotation, false, 0, ETeleportType::None);
 }
 
-void ATestProjectile01::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+void ATestProjectile::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
-    GWarn->Logf(ELogVerbosity::Error, TEXT(" ATestProjectile01::NotifyHit/%s/"), *Other->GetName());
-}
-
-void ATestProjectile01::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-    //GWarn->Logf(ELogVerbosity::Error, TEXT("ATestProjectile01::OnBeginOverlap/Other:%s"), *Other->GetName());
-    //Direction = Direction - ((FVector::DotProduct(Direction, SweepResult.Normal) * 2) * SweepResult.Normal);
-}
-
-void ATestProjectile01::OnUpdatedOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Other, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-
+    GWarn->Logf(ELogVerbosity::Error, TEXT(" ATestProjectile::NotifyHit/%s/"), *Other->GetName());
 }
