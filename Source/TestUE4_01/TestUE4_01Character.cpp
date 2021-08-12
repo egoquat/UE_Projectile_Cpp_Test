@@ -66,7 +66,7 @@ float FKeyAction::GetProgress()
 	return OnProgress();
 }
 
-FKeyAction::FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress)
+FKeyAction::FKeyAction(ESkill typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress)
 {
 	TypeSkill = typeSkill;
 	Action = action;
@@ -138,19 +138,19 @@ void ATestUE4_01Character::BeginPlay()
 		TFunction<float()> onprogress = nullptr;
 		condition = [&](float deltaSec)
 		{
-			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			FTestKeyEvent& keyQ = TestKeys[(int)ETestKey::Q];
 			return (true == keyQ.IsReleased && 3.0f > keyQ.TimePressRelease);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::Skill01, [&]() {StartSkill_1(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
-			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			FTestKeyEvent& keyQ = TestKeys[(int)ETestKey::Q];
 			return (true == keyQ.IsReleased && 3.0f <= keyQ.TimePressRelease);
 		};
 		onprogress = [&]()
 		{
-			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
+			FTestKeyEvent& keyQ = TestKeys[(int)ETestKey::Q];
 			float progress = 0.0f;
 			if (true == keyQ.IsPressed && keyQ.GetElapsePressed() > 0.0f)
 			{
@@ -164,30 +164,30 @@ void ATestUE4_01Character::BeginPlay()
 
 		condition = [&](float deltaSec)
 		{
-			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
-			FTestKeyEvent& keyW = TestKeys[ETestKey::W];
+			FTestKeyEvent& keyQ = TestKeys[(int)ETestKey::Q];
+			FTestKeyEvent& keyW = TestKeys[(int)ETestKey::W];
 			return (true == keyQ.IsPressed && 1.0f >= keyQ.GetElapsePressed() && true == keyW.IsPressed);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::Skill03, [&]() {StartSkill_3(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
-			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
-			FTestKeyEvent& keyW = TestKeys[ETestKey::W];
+			FTestKeyEvent& keyQ = TestKeys[(int)ETestKey::Q];
+			FTestKeyEvent& keyW = TestKeys[(int)ETestKey::W];
 			return (false == keyQ.IsPressed && true == keyW.IsReleased);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::Skill04, [&]() {StartSkill_4(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
-			FTestKeyEvent& keyA = TestKeys[ETestKey::A];
+			FTestKeyEvent& keyA = TestKeys[(int)ETestKey::A];
 			return (true == keyA.IsReleased);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::Skill05, [&]() {StartSkill_5(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
-			FTestKeyEvent& keyE = TestKeys[ETestKey::E];
+			FTestKeyEvent& keyE = TestKeys[(int)ETestKey::E];
 			return (true == keyE.IsReleased);
 		};
 		TestKeyActions.Add(FKeyAction(ESkill::Skill06, [&]() {StartSkill_6(); }, condition));
@@ -258,10 +258,11 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyWPressedStart);
 	PlayerInputComponent->BindKey(EKeys::W, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyWPressedEnd);
 
+	PlayerInputComponent->BindKey(EKeys::E, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyEPressedStart);
+	PlayerInputComponent->BindKey(EKeys::E, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyEPressedEnd);
+
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyAPressedStart);
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
-
-	PlayerInputComponent->BindKey(EKeys::R, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyRPressedEnd);
 }
 
 template<class T>
@@ -390,34 +391,45 @@ void ATestUE4_01Character::MoveRight(float Value)
 	AddMovementInput(FVector(0.f,-1.f,0.f), Value);
 }
 
+
 void ATestUE4_01Character::KeyQPressedStart()
 {
-	TestKeys[ETestKey::Q].StartPress();
+	TestKeys[(int)ETestKey::Q].StartPress();
 }
 
 void ATestUE4_01Character::KeyQPressedEnd()
 {
-	TestKeys[ETestKey::Q].EndPress();
+	TestKeys[(int)ETestKey::Q].EndPress();
 }
 
 void ATestUE4_01Character::KeyWPressedStart()
 {
-	TestKeys[ETestKey::W].StartPress();
+	TestKeys[(int)ETestKey::W].StartPress();
 }
 
 void ATestUE4_01Character::KeyWPressedEnd()
 {
-	TestKeys[ETestKey::W].EndPress();
+	TestKeys[(int)ETestKey::W].EndPress();
+}
+
+void ATestUE4_01Character::KeyEPressedStart()
+{
+	TestKeys[(int)ETestKey::E].StartPress();
+}
+
+void ATestUE4_01Character::KeyEPressedEnd()
+{
+	TestKeys[(int)ETestKey::E].EndPress();
 }
 
 void ATestUE4_01Character::KeyAPressedStart()
 {
-	TestKeys[ETestKey::A].StartPress();
+	TestKeys[(int)ETestKey::A].StartPress();
 }
 
 void ATestUE4_01Character::KeyAPressedEnd()
 {
-	TestKeys[ETestKey::A].EndPress();
+	TestKeys[(int)ETestKey::A].EndPress();
 }
 
 void ATestUE4_01Character::KeyRPressedEnd()
@@ -432,5 +444,5 @@ void ATestUE4_01Character::AddDestroyRequest(ATestProjectile* Projectile)
 
 int ATestUE4_01Character::GetProgressSkill_2()
 {
-	return TestKeyActions[ESkill::Skill02].GetProgress() * 100.0f;
+	return TestKeyActions[(int)ESkill::Skill02].GetProgress() * 100.0f;
 }

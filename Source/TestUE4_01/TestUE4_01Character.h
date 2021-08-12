@@ -9,41 +9,35 @@
 #include "TestUE4_01Character.generated.h"
 
 UENUM()
-namespace ETestKey
+enum class ETestKey : uint8
 {
-	enum Type
-	{
-		Q = 0,
-		W,
-		E,
-		R,
-		A
-	};
-}
+	Q = 0,
+	W,
+	E,
+	R,
+	A
+};
 
 UENUM()
-namespace ESkill
+enum class ESkill : uint8
 {
-	enum Type
-	{
-		Skill01 = 0,
-		Skill02,
-		Skill03,
-		Skill04,
-		Skill05,
-		Skill06
-	};
-}
+	Skill01 = 0,
+	Skill02,
+	Skill03,
+	Skill04,
+	Skill05,
+	Skill06
+};
 
 struct FTestKeyEvent
 {
-	ETestKey::Type Key;
+	ETestKey Key;
 	bool IsPressed = false;
 	bool IsReleased = false;
 	bool IsEvented = false;
 	float TimePressStart = -1.0f;
 	float TimePressRelease = 0.0f;
-	FTestKeyEvent(ETestKey::Type key) { Key = key; }
+	FTestKeyEvent(ETestKey key) { Key = key; }
 
 private:
 	void Reset();
@@ -59,13 +53,13 @@ public:
 
 struct FKeyAction
 {
-	ESkill::Type TypeSkill;
+	ESkill TypeSkill;
 	TFunction<void()> Action = nullptr;
 	TFunction<bool(float)> Cond = nullptr;
 	TFunction<float()> OnProgress = nullptr;
 	float TimeLastCall = 0.0f;
 	float GetProgress();
-	FKeyAction(ESkill::Type typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress = nullptr);
+	FKeyAction(ESkill typeSkill, TFunction<void()> action, TFunction<bool(float)> cond, TFunction<float()> onprogress = nullptr);
 	void TickAction(float deltaSec);
 };
 
@@ -120,11 +114,15 @@ private:
 
 private:
 	void MoveRight(float Val);
+
 	void KeyQPressedStart();
 	void KeyQPressedEnd();
 
 	void KeyWPressedStart();
 	void KeyWPressedEnd();
+
+	void KeyEPressedStart();
+	void KeyEPressedEnd();
 
 	void KeyAPressedStart();
 	void KeyAPressedEnd();

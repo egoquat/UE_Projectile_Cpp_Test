@@ -29,7 +29,7 @@ public:
     UPROPERTY()
     UBoxComponent* CollisionComponent;
 
-private:
+protected:
     float Speed = 0.0f;
     FVector PositionStart;
     FVector Direction;

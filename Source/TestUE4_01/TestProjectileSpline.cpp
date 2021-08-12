@@ -1,4 +1,5 @@
 #include "TestProjectileSpline.h"
+#include "TestUE4_01Character.h"
 
 ATestProjectileSpline::ATestProjectileSpline()
 {
@@ -11,7 +12,7 @@ void ATestProjectileSpline::InitProjectile(const FVector& InPosition, FVector& I
 {
 	SplineComponent->AddSplineWorldPoint(InPosition);
 	const int countIteration = 10;
-	const float distance = 1000.0f, distanceUnit = distance / (float)countIteration, distanceWave = 50.0f;
+	const float distance = DEFAULT_DIST_PROJECTILESPLINE, distanceUnit = distance / (float)countIteration, distanceWave = 50.0f;
 	for (int i = 0; i < countIteration; ++i)
 	{
 		float currentDistance = distanceUnit * i;
@@ -26,6 +27,15 @@ void ATestProjectileSpline::InitProjectile(const FVector& InPosition, FVector& I
 
 void ATestProjectileSpline::UpdateLocation(const FVector& LocationCurrent, float DeltaTime)
 {
-	Super::UpdateLocation(LocationCurrent, DeltaTime);
+	float time = TimeCumulative / (DEFAULT_DIST_PROJECTILESPLINE/DEFAULT_SPEED_PROJECTILE);
+
+	FVector newLocation = SplineComponent->GetLocationAtTime(time, ESplineCoordinateSpace::World);
+	SetActorLocationAndRotation(newLocation, Rotation, false, 0, ETeleportType::None);
+
 	TimeCumulative = TimeCumulative + DeltaTime;
+
+	if (time > 1.0f)
+	{
+		ATestUE4_01Character::AddDestroyRequest(this);
+	}
 }
