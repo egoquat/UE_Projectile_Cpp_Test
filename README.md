@@ -1,6 +1,9 @@
 # ue4 projectile test
-UE 4.26.
-Projectile Test Project.
-Movement : Left, Right Key. Jump : Space Key.
-Skill : Q, Q Delay, Q + W, A Key.
+UE 4.26 / 2d platformaer / C++ test 
+
+Projectile key : Q / E / Q Delay / Q + W / A
+
+Movement key : arrow
+
+Jump key : Space
 
