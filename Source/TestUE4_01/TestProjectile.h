@@ -52,9 +52,9 @@ protected:
     bool IntersectLine(FHitResult& OutHit, const FVector& InStart, const FVector& InEnd);
 
 public:
-    virtual void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+    virtual void InitProjectile(const FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 
 protected:
-    virtual void UpdateLocation(FVector LocationCurrent, float DeltaTime);
+    virtual void UpdateLocation(const FVector& LocationCurrent, float DeltaTime);
     virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 };

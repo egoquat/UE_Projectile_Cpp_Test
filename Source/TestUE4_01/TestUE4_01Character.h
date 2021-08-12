@@ -15,6 +15,8 @@ namespace ETestKey
 	{
 		Q = 0,
 		W,
+		E,
+		R,
 		A
 	};
 }
@@ -24,11 +26,12 @@ namespace ESkill
 {
 	enum Type
 	{
-		_1 = 0,
-		_2,
-		_3,
-		_4,
-		_5
+		Skill01 = 0,
+		Skill02,
+		Skill03,
+		Skill04,
+		Skill05,
+		Skill06
 	};
 }
 
@@ -98,9 +101,14 @@ private:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 private:
-	ATestProjectile* SpawnProjectileByActor(float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+	template<class T>
+	T* SpawnProjectileByActor(float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+
+	template<class T>
 	void SpawnProjectileQueued(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
-	ATestProjectile* SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
+
+	template<class T>
+	T* SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale = 1.0f, float InAngle = 0.0f, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red);
 
 private:
 	void StartSkill_1();
@@ -108,6 +116,7 @@ private:
 	void StartSkill_3();
 	void StartSkill_4();
 	void StartSkill_5();
+	void StartSkill_6();
 
 private:
 	void MoveRight(float Val);

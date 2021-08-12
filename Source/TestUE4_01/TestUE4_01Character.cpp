@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "TestProjectile.h"
+#include "TestProjectileSpline.h"
 #include "TestUE4_01UI.h"
 
 TSet<ATestProjectile*> ATestUE4_01Character::DestroyProjectiles;
@@ -129,6 +130,8 @@ void ATestUE4_01Character::BeginPlay()
 	{
 		TestKeys.Add(FTestKeyEvent(ETestKey::Q));
 		TestKeys.Add(FTestKeyEvent(ETestKey::W));
+		TestKeys.Add(FTestKeyEvent(ETestKey::E));
+		TestKeys.Add(FTestKeyEvent(ETestKey::R));
 		TestKeys.Add(FTestKeyEvent(ETestKey::A));
 
 		TFunction<bool(float)> condition = nullptr;
@@ -138,7 +141,7 @@ void ATestUE4_01Character::BeginPlay()
 			FTestKeyEvent& keyQ = TestKeys[ETestKey::Q];
 			return (true == keyQ.IsReleased && 3.0f > keyQ.TimePressRelease);
 		};
-		TestKeyActions.Add(FKeyAction(ESkill::_1, [&]() {StartSkill_1(); }, condition));
+		TestKeyActions.Add(FKeyAction(ESkill::Skill01, [&]() {StartSkill_1(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
@@ -157,7 +160,7 @@ void ATestUE4_01Character::BeginPlay()
 			}
 			return progress;
 		};
-		TestKeyActions.Add(FKeyAction(ESkill::_2, [&]() {StartSkill_2(); }, condition, onprogress));
+		TestKeyActions.Add(FKeyAction(ESkill::Skill02, [&]() {StartSkill_2(); }, condition, onprogress));
 
 		condition = [&](float deltaSec)
 		{
@@ -165,7 +168,7 @@ void ATestUE4_01Character::BeginPlay()
 			FTestKeyEvent& keyW = TestKeys[ETestKey::W];
 			return (true == keyQ.IsPressed && 1.0f >= keyQ.GetElapsePressed() && true == keyW.IsPressed);
 		};
-		TestKeyActions.Add(FKeyAction(ESkill::_3, [&]() {StartSkill_3(); }, condition));
+		TestKeyActions.Add(FKeyAction(ESkill::Skill03, [&]() {StartSkill_3(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
@@ -173,14 +176,21 @@ void ATestUE4_01Character::BeginPlay()
 			FTestKeyEvent& keyW = TestKeys[ETestKey::W];
 			return (false == keyQ.IsPressed && true == keyW.IsReleased);
 		};
-		TestKeyActions.Add(FKeyAction(ESkill::_4, [&]() {StartSkill_4(); }, condition));
+		TestKeyActions.Add(FKeyAction(ESkill::Skill04, [&]() {StartSkill_4(); }, condition));
 
 		condition = [&](float deltaSec)
 		{
 			FTestKeyEvent& keyA = TestKeys[ETestKey::A];
 			return (true == keyA.IsReleased);
 		};
-		TestKeyActions.Add(FKeyAction(ESkill::_5, [&]() {StartSkill_5(); }, condition));
+		TestKeyActions.Add(FKeyAction(ESkill::Skill05, [&]() {StartSkill_5(); }, condition));
+
+		condition = [&](float deltaSec)
+		{
+			FTestKeyEvent& keyE = TestKeys[ETestKey::E];
+			return (true == keyE.IsReleased);
+		};
+		TestKeyActions.Add(FKeyAction(ESkill::Skill06, [&]() {StartSkill_6(); }, condition));
 	}
 
 	FTestUE4_01UI::InitTestUI();
@@ -254,7 +264,8 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindKey(EKeys::R, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyRPressedEnd);
 }
 
-ATestProjectile* ATestUE4_01Character::SpawnProjectileByActor(float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+template<class T>
+T* ATestUE4_01Character::SpawnProjectileByActor(float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
 	ACharacter* Character = UGameplayStatics::GetPlayerCharacter(GWorld, 0);
 	UPawnMovementComponent* MoveComp = Character->GetMovementComponent();
@@ -263,20 +274,22 @@ ATestProjectile* ATestUE4_01Character::SpawnProjectileByActor(float InScale, flo
 	FTransform TM = Character->GetTransform();
 	FQuat Rotation = TM.GetRotation();
 	FVector PosRelative = MoveComp->GetActorFeetLocation() - TM.GetLocation() + (Rotation.GetUpVector() * 50) + (Rotation.GetForwardVector() * 20);
-	ATestProjectile* Spawned = SpawnProjectile(TM, PosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
+	T* Spawned = SpawnProjectile<T>(TM, PosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
 	return Spawned;
 }
 
+template<class T>
 void ATestUE4_01Character::SpawnProjectileQueued(const FTransform& InTM, const FVector& InPosRelative, float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
 	TFunction<void()> OnSpawn = [=]()
 	{
-		SpawnProjectile(InTM, InPosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
+		SpawnProjectile<T>(InTM, InPosRelative, InScale, InAngle, bIsHitReflect, InTimeDestroy, InColor);
 	};
 	QueueOnSpawns.Enqueue(OnSpawn);
 }
 
-ATestProjectile* ATestUE4_01Character::SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+template<class T>
+T* ATestUE4_01Character::SpawnProjectile(const FTransform& InTM, const FVector& InPosRelative, float InScale, float InAngle, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
 	FQuat Rotation = InTM.GetRotation();
 	FVector Dir = Rotation.GetForwardVector();
@@ -284,7 +297,7 @@ ATestProjectile* ATestUE4_01Character::SpawnProjectile(const FTransform& InTM, c
 	FVector Location = InTM.GetLocation() + InPosRelative;
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	ATestProjectile* NewProjectile = GWorld->SpawnActor<ATestProjectile>(ATestProjectile::StaticClass(), SpawnParams);
+	T* NewProjectile = GWorld->SpawnActor<T>(T::StaticClass(), SpawnParams);
 	if (FMath::Abs(InAngle) > KINDA_SMALL_NUMBER)
 	{
 		FRotator Rotator = Rotation.Rotator();
@@ -298,13 +311,13 @@ ATestProjectile* ATestUE4_01Character::SpawnProjectile(const FTransform& InTM, c
 void ATestUE4_01Character::StartSkill_1()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_1"));
-	SpawnProjectileByActor(1.0f);
+	SpawnProjectileByActor<ATestProjectile>(1.0f);
 }
 
 void ATestUE4_01Character::StartSkill_2()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_2"));
-	SpawnProjectileByActor(3.0f, 0.0f, false, 5.0f);
+	SpawnProjectileByActor<ATestProjectile>(3.0f, 0.0f, false, 5.0f);
 }
 
 void ATestUE4_01Character::StartSkill_3()
@@ -316,28 +329,28 @@ void ATestUE4_01Character::StartSkill_3()
 
 		FTransform tm = projectile->GetTransform();
 		FVector relative = FVector::ZeroVector;
-		SpawnProjectileQueued(tm, relative, 1.0f, 0.0f);
-		SpawnProjectileQueued(tm, relative, 1.0f, 45.0f);
-		SpawnProjectileQueued(tm, relative, 1.0f, -45.0f);
+		SpawnProjectileQueued<ATestProjectile>(tm, relative, 1.0f, 0.0f);
+		SpawnProjectileQueued<ATestProjectile>(tm, relative, 1.0f, 45.0f);
+		SpawnProjectileQueued<ATestProjectile>(tm, relative, 1.0f, -45.0f);
 
 		ATestUE4_01Character::AddDestroyRequest(projectile);
 		projectile->ArrowComponent->bHiddenInGame = true;
 	};
 	ATestProjectile* Spawned = nullptr;
-	Spawned = SpawnProjectileByActor(1.0f, 0.0f, false, 4.0f);
+	Spawned = SpawnProjectileByActor<ATestProjectile>(1.0f, 0.0f, false, 4.0f);
 	Spawned->OnTimeTrigger = OnTimeTrigger;
 
-	Spawned = SpawnProjectileByActor(1.0f, 45.0f, false, 4.0f);
+	Spawned = SpawnProjectileByActor<ATestProjectile>(1.0f, 45.0f, false, 4.0f);
 	Spawned->OnTimeTrigger = OnTimeTrigger;
 
-	Spawned = SpawnProjectileByActor(1.0f, -45.0f, false, 4.0f);
+	Spawned = SpawnProjectileByActor<ATestProjectile>(1.0f, -45.0f, false, 4.0f);
 	Spawned->OnTimeTrigger = OnTimeTrigger;
 }
 
 void ATestUE4_01Character::StartSkill_4()
 {
 	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_4"));
-	SpawnProjectileByActor(1.0f, 0.0f, true, 5.0f, FColor(0, 0, 255));
+	SpawnProjectileByActor<ATestProjectile>(1.0f, 0.0f, true, 5.0f, FColor(0, 0, 255));
 }
 
 void ATestUE4_01Character::StartSkill_5()
@@ -351,7 +364,7 @@ void ATestUE4_01Character::StartSkill_5()
 		FVector relative = FVector::ZeroVector;
 		for (int i = 0; i < 360; i += 45)
 		{
-			SpawnProjectileQueued(tm, relative, 0.5f, i, true, DEFAULT_DESTROY, FColor::Cyan);
+			SpawnProjectileQueued<ATestProjectile>(tm, relative, 0.5f, i, true, DEFAULT_DESTROY, FColor::Cyan);
 		}
 
 		ATestUE4_01Character::AddDestroyRequest(projectile);
@@ -360,9 +373,15 @@ void ATestUE4_01Character::StartSkill_5()
 
 	for (int i = 0; i < 360; i += 30)
 	{
-		ATestProjectile* Spawned = SpawnProjectileByActor(0.5f, i, true, 4.0f, FColor(0, 0, 255));
+		ATestProjectile* Spawned = SpawnProjectileByActor<ATestProjectile>(0.5f, i, true, 4.0f, FColor(0, 0, 255));
 		Spawned->OnTimeTrigger = OnTimeTrigger;
 	}
+}
+
+void ATestUE4_01Character::StartSkill_6()
+{
+	GWarn->Logf(ELogVerbosity::Display, TEXT("StartSkill_6"));
+	SpawnProjectileByActor<ATestProjectileSpline>(1.0f, 0.0f, true, 5.0f, FColor(0, 0, 255));
 }
 
 void ATestUE4_01Character::MoveRight(float Value)
@@ -413,5 +432,5 @@ void ATestUE4_01Character::AddDestroyRequest(ATestProjectile* Projectile)
 
 int ATestUE4_01Character::GetProgressSkill_2()
 {
-	return TestKeyActions[ESkill::_2].GetProgress() * 100.0f;
+	return TestKeyActions[ESkill::Skill02].GetProgress() * 100.0f;
 }

@@ -75,11 +75,11 @@ bool ATestProjectile::IntersectLine(FHitResult& OutHit, const FVector& InStart, 
 	return intersected;
 }
 
-void ATestProjectile::InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
+void ATestProjectile::InitProjectile(const FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect, float InTimeDestroy, FColor InColor)
 {
     Direction = InDirection;
     Rotation = Direction.ToOrientationQuat();
-    Speed = DEFAULT_SPEED;
+    Speed = DEFAULT_SPEED_PROJECTILE;
     TimeSpawned = FPlatformTime::Seconds();
     TimeDestroyForce = TimeSpawned + InTimeDestroy;
     PositionStart = InPosition + (InDirection * DEFAULT_RELATIVE);
@@ -128,7 +128,7 @@ void ATestProjectile::InitProjectile(FVector& InPosition, FVector& InDirection, 
     SetActorLocationAndRotation(PositionStart, Rotation, false, 0, ETeleportType::None);
 }
 
-void ATestProjectile::UpdateLocation(FVector LocationCurrent, float DeltaTime)
+void ATestProjectile::UpdateLocation(const FVector& LocationCurrent, float DeltaTime)
 {
 	FCollisionQueryParams TraceParams;
 	TraceParams.AddIgnoredActor(this);

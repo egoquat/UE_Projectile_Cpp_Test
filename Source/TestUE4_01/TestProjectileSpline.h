@@ -15,10 +15,12 @@ public:
 	UPROPERTY()
 	USplineComponent* SplineComponent;
 
+	float TimeCumulative = 0.0f;
+
 public:
-	virtual void InitProjectile(FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red) override;
+	virtual void InitProjectile(const FVector& InPosition, FVector& InDirection, float InScale, bool bIsHitReflect = false, float InTimeDestroy = DEFAULT_DESTROY, FColor InColor = FColor::Red) override;
 
 protected:
-	virtual void UpdateLocation(FVector LocationCurrent, float DeltaTime) override;
+	virtual void UpdateLocation(const FVector& LocationCurrent, float DeltaTime) override;
 };
 
