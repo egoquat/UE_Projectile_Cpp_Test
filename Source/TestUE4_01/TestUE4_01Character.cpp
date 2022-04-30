@@ -204,6 +204,9 @@ void ATestUE4_01Character::BeginPlay()
 		APlayerCameraManager* CameraManager = PlayerController->PlayerCameraManager;
 		CameraManager->SetFOV(90);
 	}
+
+	USkeletalMeshComponent* Component = Cast<USkeletalMeshComponent>(GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+	this->WasRecentlyRendered(0.025f);
 }
 
 //////////////////////////////////////////////////////////////////////////
