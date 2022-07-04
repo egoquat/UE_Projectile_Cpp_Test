@@ -266,6 +266,8 @@ void ATestUE4_01Character::SetupPlayerInputComponent(class UInputComponent* Play
 
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyAPressedStart);
 	PlayerInputComponent->BindKey(EKeys::A, EInputEvent::IE_Released, this, &ATestUE4_01Character::KeyAPressedEnd);
+
+	PlayerInputComponent->BindKey(EKeys::R, EInputEvent::IE_Pressed, this, &ATestUE4_01Character::KeyRPressedEnd);
 }
 
 template<class T>
