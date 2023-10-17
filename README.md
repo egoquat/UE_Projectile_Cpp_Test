@@ -1,5 +1,5 @@
-# ue4 projectile test
-UE 4.26 / 2d platformaer / C++ test 
+# 
+UE 4.26 projectile test / 2.5d platformaer / C++ test 
 
 Projectile key : Q / E / Q Delay / Q + W / A
 
