@@ -95,7 +95,7 @@ void ATestProjectile::InitProjectile(const FVector& InPosition, FVector& InDirec
         
 		FVector boxExtent = Rotation.RotateVector(CollisionComponent->GetScaledBoxExtent()).GetAbs();
 		FCollisionShape collisionShape; 
-		collisionShape.SetBox(boxExtent);
+		collisionShape.SetBox(FVector3f(boxExtent));
 
 		TArray<FOverlapResult> OutOverlaps;
 
@@ -105,7 +105,7 @@ void ATestProjectile::InitProjectile(const FVector& InPosition, FVector& InDirec
 			for (int i = 0; i < OutOverlaps.Num(); ++i)
 			{
 				FOverlapResult& overlap = OutOverlaps[i];
-				if (nullptr != overlap.Actor && overlap.Actor->GetClass() != ATestProjectile::StaticClass())
+				if (nullptr != overlap.GetActor() && overlap.GetActor()->GetClass() != ATestProjectile::StaticClass())
 				{
 					if (true == IsHitReflect)
 					{
@@ -136,7 +136,7 @@ void ATestProjectile::UpdateLocation(const FVector& LocationCurrent, float Delta
 	TraceParams.bTraceComplex = true;
 	FHitResult Hit;
 	bool Hitted = GWorld->LineTraceSingleByObjectType(Hit, LocationCurrent, LocationCurrent + (Direction * DEFAULT_ARROW_LEN), FCollisionObjectQueryParams(ECC_WorldStatic), TraceParams);
-	if (true == Hitted && Hit.Actor.Get()->GetClass() != ATestProjectile::StaticClass())
+	if (true == Hitted && Hit.GetActor()->GetClass() != ATestProjectile::StaticClass())
 	{
 		if (true == IsHitReflect)
 		{
