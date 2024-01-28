@@ -1,5 +1,5 @@
 # 
-UE 5 projectile test / platformaer / C++
+UE 5 projectile test / platformaer / C++ / Curve Projectile 
 
 Projectile key : Q / E / Q Delay / Q + W / A
 
